@@ -1,0 +1,22 @@
+{
+  "name": "curos",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Curos — Cortex OI Monorepo",
+  "scripts": {
+    "dev": "pnpm --filter cortex-web dev",
+    "build": "pnpm --filter cortex-web build",
+    "type-check": "pnpm -r run type-check",
+    "lint": "pnpm -r run lint",
+    "generate:types": "pnpm --filter @curos/types generate",
+    "clean": "pnpm -r exec rm -rf .next dist out node_modules/.cache"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "packageManager": "pnpm@9.12.0"
+}

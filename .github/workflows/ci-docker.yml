@@ -1,0 +1,28 @@
+name: CI — Docker Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Copy env files
+        run: |
+          cp .env.example .env
+          cp apps/cortex-api/.env.example apps/cortex-api/.env
+
+      - name: Build all images (smoke test)
+        run: docker compose build --no-cache
+
+      - name: Verify images built
+        run: docker compose config --quiet && echo "Docker Compose config is valid"

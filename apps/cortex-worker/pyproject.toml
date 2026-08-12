@@ -1,0 +1,22 @@
+[project]
+name = "cortex-worker"
+version = "0.1.0"
+description = "Curos Cortex OI — Background Worker Skeleton"
+requires-python = ">=3.13"
+
+# Intentionally minimal — no Celery yet.
+# Add task queue dependencies when actual jobs are needed.
+dependencies = [
+    "pydantic-settings>=2.6.0",
+    "structlog>=24.4.0",
+    "redis[hiredis]>=5.2.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.8.0",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88

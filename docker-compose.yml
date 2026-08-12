@@ -1,0 +1,118 @@
+services:
+  # ============================================================
+  # PostgreSQL 16
+  # ============================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: cortex_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-cortex_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-cortex}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cortex} -d ${POSTGRES_DB:-cortex_dev}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ============================================================
+  # Redis 7
+  # ============================================================
+  redis:
+    image: redis:7-alpine
+    container_name: cortex_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  # ============================================================
+  # cortex-api — FastAPI Backend
+  # ============================================================
+  cortex-api:
+    build:
+      context: ./apps/cortex-api
+      dockerfile: Dockerfile
+      target: development
+    container_name: cortex_api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-cortex}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-cortex_dev}
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./apps/cortex-api:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ============================================================
+  # cortex-web — Next.js Frontend
+  # ============================================================
+  cortex-web:
+    build:
+      context: ./apps/cortex-web
+      dockerfile: Dockerfile
+      target: development
+    container_name: cortex_web
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_APP_NAME: Cortex OI
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/cortex-web:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - cortex-api
+    command: pnpm dev
+
+  # ============================================================
+  # cortex-worker — Background Worker Skeleton
+  # ============================================================
+  cortex-worker:
+    build:
+      context: ./apps/cortex-worker
+      dockerfile: Dockerfile
+      target: development
+    container_name: cortex_worker
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-cortex}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-cortex_dev}
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ./apps/cortex-worker:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:

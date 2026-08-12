@@ -1,0 +1,18 @@
+{
+  "name": "@curos/types",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Auto-generated TypeScript types from Cortex OI OpenAPI spec",
+  "scripts": {
+    "generate": "openapi-typescript http://localhost:8000/openapi.json -o src/api.generated.ts",
+    "generate:file": "openapi-typescript openapi.json -o src/api.generated.ts",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.4.0",
+    "typescript": "^5.4.5"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

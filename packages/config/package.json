@@ -1,0 +1,13 @@
+{
+  "name": "@curos/config",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared configuration helpers for Curos products",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  }
+}
