@@ -24,5 +24,7 @@ api_router.include_router(identity_router)
 api_router.include_router(organization_router)
 api_router.include_router(authorization_router)
 api_router.include_router(audit_router)
-api_router.include_router(workflow_router, prefix="/organizations/{organization_id}/workflows", tags=["Workflows"])
+api_router.include_router(
+    workflow_router, prefix="/organizations/{organization_id}/workflows", tags=["Workflows"]
+)
 api_router.include_router(event_router)

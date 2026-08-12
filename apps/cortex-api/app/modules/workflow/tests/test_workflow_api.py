@@ -20,7 +20,9 @@ class MockAuthService:
     def __init__(self):
         pass
 
-    async def ensure_permission(self, user_id: str, organization_id: str, permission_key: str) -> None:
+    async def ensure_permission(
+        self, user_id: str, organization_id: str, permission_key: str
+    ) -> None:
         pass
 
 
@@ -67,14 +69,21 @@ async def test_workflow_lifecycle(
 ):
     # Setup test org in DB
     from app.modules.organization.infrastructure.models import OrganizationModel
-    org = OrganizationModel(id=org_id, name=f"Test Org {org_id}", slug=f"test-org-{org_id}", type="UNIVERSITY", status="ACTIVE")
+
+    org = OrganizationModel(
+        id=org_id,
+        name=f"Test Org {org_id}",
+        slug=f"test-org-{org_id}",
+        type="UNIVERSITY",
+        status="ACTIVE",
+    )
     db_session.add(org)
     await db_session.commit()
 
     # 1. Create Workflow Definition
     resp = await client.post(
         f"/api/v1/organizations/{org_id}/workflows/definitions",
-        json={"name": "Event Approval Workflow"}
+        json={"name": "Event Approval Workflow"},
     )
     assert resp.status_code == 201
     definition_id = resp.json()["id"]
@@ -82,18 +91,20 @@ async def test_workflow_lifecycle(
     # 2. Add States
     await client.post(
         f"/api/v1/organizations/{org_id}/workflows/definitions/{definition_id}/states",
-        json={"name": "Draft", "key": "draft", "type": "INITIAL"}
+        json={"name": "Draft", "key": "draft", "type": "INITIAL"},
     )
     await client.post(
         f"/api/v1/organizations/{org_id}/workflows/definitions/{definition_id}/states",
-        json={"name": "Review", "key": "review", "type": "NORMAL"}
+        json={"name": "Review", "key": "review", "type": "NORMAL"},
     )
     await client.post(
         f"/api/v1/organizations/{org_id}/workflows/definitions/{definition_id}/states",
-        json={"name": "Approved", "key": "approved", "type": "FINAL"}
+        json={"name": "Approved", "key": "approved", "type": "FINAL"},
     )
 
-    states_resp = await client.get(f"/api/v1/organizations/{org_id}/workflows/definitions/{definition_id}/states")
+    states_resp = await client.get(
+        f"/api/v1/organizations/{org_id}/workflows/definitions/{definition_id}/states"
+    )
     states = states_resp.json()
     state_draft = next(s for s in states if s["key"] == "draft")
     state_review = next(s for s in states if s["key"] == "review")
@@ -105,16 +116,16 @@ async def test_workflow_lifecycle(
         json={
             "from_state_id": state_draft["id"],
             "to_state_id": state_review["id"],
-            "action": "submit"
-        }
+            "action": "submit",
+        },
     )
     await client.post(
         f"/api/v1/organizations/{org_id}/workflows/definitions/{definition_id}/transitions",
         json={
             "from_state_id": state_review["id"],
             "to_state_id": state_approved["id"],
-            "action": "approve"
-        }
+            "action": "approve",
+        },
     )
 
     # 4. Publish Workflow
@@ -131,8 +142,8 @@ async def test_workflow_lifecycle(
         json={
             "workflow_definition_id": definition_id,
             "resource_type": "event",
-            "resource_id": resource_id
-        }
+            "resource_id": resource_id,
+        },
     )
     assert start_resp.status_code == 201
     instance_id = start_resp.json()["id"]
@@ -142,7 +153,7 @@ async def test_workflow_lifecycle(
     # 6. Execute Transition (Submit)
     trans_resp = await client.post(
         f"/api/v1/organizations/{org_id}/workflows/instances/{instance_id}/execute",
-        json={"action": "submit"}
+        json={"action": "submit"},
     )
     assert trans_resp.status_code == 200
     assert trans_resp.json()["current_state_id"] == state_review["id"]
@@ -150,16 +161,18 @@ async def test_workflow_lifecycle(
     # 7. Execute Transition (Approve)
     trans_resp = await client.post(
         f"/api/v1/organizations/{org_id}/workflows/instances/{instance_id}/execute",
-        json={"action": "approve"}
+        json={"action": "approve"},
     )
     assert trans_resp.status_code == 200
     assert trans_resp.json()["current_state_id"] == state_approved["id"]
     assert trans_resp.json()["status"] == "COMPLETED"
 
     # 8. Check History
-    history_resp = await client.get(f"/api/v1/organizations/{org_id}/workflows/instances/{instance_id}/history")
+    history_resp = await client.get(
+        f"/api/v1/organizations/{org_id}/workflows/instances/{instance_id}/history"
+    )
     history = history_resp.json()
-    assert len(history) == 3 # Start, Submit, Approve
+    assert len(history) == 3  # Start, Submit, Approve
     assert history[0]["action"] == "start"
     assert history[1]["action"] == "submit"
     assert history[2]["action"] == "approve"

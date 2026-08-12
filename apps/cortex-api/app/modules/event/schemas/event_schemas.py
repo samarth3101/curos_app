@@ -21,6 +21,7 @@ class EventCreate(BaseModel):
     department_id: str | None = None
     description: str | None = None
 
+
 class EventUpdate(BaseModel):
     title: str | None = None
     event_type: EventType | None = None
@@ -31,6 +32,7 @@ class EventUpdate(BaseModel):
     campus_id: str | None = None
     department_id: str | None = None
     description: str | None = None
+
 
 class EventResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -52,6 +54,7 @@ class EventResponse(BaseModel):
     created_at: datetime | None
     updated_at: datetime | None
 
+
 class EventRegistrationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -62,9 +65,11 @@ class EventRegistrationResponse(BaseModel):
     registered_at: datetime | None
     cancelled_at: datetime | None
 
+
 class EventAttendanceCreate(BaseModel):
     user_id: str
     method: AttendanceMethod
+
 
 class EventAttendanceResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)

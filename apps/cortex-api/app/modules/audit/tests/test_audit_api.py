@@ -12,9 +12,12 @@ class MockAuthService:
     def __init__(self, should_fail=False):
         self.should_fail = should_fail
 
-    async def ensure_permission(self, user_id: str, organization_id: str, permission_key: str) -> None:
+    async def ensure_permission(
+        self, user_id: str, organization_id: str, permission_key: str
+    ) -> None:
         if self.should_fail:
             from app.core.exceptions import ForbiddenError
+
             raise ForbiddenError("User lacks required permission")
 
 
@@ -33,7 +36,7 @@ class MockAuditRepo:
 
         limit = kwargs.get("limit", 50)
         skip = kwargs.get("skip", 0)
-        return filtered[skip:skip+limit], len(filtered)
+        return filtered[skip : skip + limit], len(filtered)
 
 
 @pytest.fixture
@@ -44,6 +47,7 @@ def mock_audit_service():
 @pytest.fixture
 def override_deps(mock_audit_service: AuditService):
     from app.main import app
+
     test_user_id = new_id()
 
     app.dependency_overrides[get_current_user_id] = lambda: test_user_id
@@ -68,7 +72,9 @@ async def test_get_audit_logs_empty(client: AsyncClient, override_deps):
 
 
 @pytest.mark.asyncio
-async def test_get_audit_logs_with_data(client: AsyncClient, override_deps, mock_audit_service: AuditService):
+async def test_get_audit_logs_with_data(
+    client: AsyncClient, override_deps, mock_audit_service: AuditService
+):
     org_id = new_id()
 
     # Record some actions
@@ -78,7 +84,7 @@ async def test_get_audit_logs_with_data(client: AsyncClient, override_deps, mock
         resource_type="organization",
         resource_id=org_id,
         actor_id=new_id(),
-        metadata={"name": "Test Org"}
+        metadata={"name": "Test Org"},
     )
     await mock_audit_service.record_action(
         organization_id=org_id,
@@ -102,6 +108,7 @@ async def test_get_audit_logs_with_data(client: AsyncClient, override_deps, mock
 @pytest.mark.asyncio
 async def test_get_audit_logs_unauthorized(client: AsyncClient):
     from app.main import app
+
     org_id = new_id()
 
     # Setup mock auth service to fail

@@ -22,6 +22,7 @@ async def get_authentication_service(
     """Provide the AuthenticationService."""
     from app.modules.audit.application.services import AuditService
     from app.modules.audit.infrastructure.repositories import AuditRepository
+
     audit_service = AuditService(AuditRepository(session))
     return AuthenticationService(user_repo, audit_service)
 

@@ -47,6 +47,7 @@ async def rbac_auth_user(db_session: AsyncSession) -> User:
 @pytest.fixture
 def rbac_client_mocked(client: AsyncClient, rbac_auth_user: User) -> Generator[AsyncClient]:
     from app.main import app
+
     app.dependency_overrides[get_current_user_id] = lambda: rbac_auth_user.id
     yield client
     app.dependency_overrides.pop(get_current_user_id, None)
@@ -67,7 +68,9 @@ async def rbac_test_org(db_session: AsyncSession, rbac_auth_user: User) -> str:
         membership_role_repo=MembershipRoleRepository(db_session),
         membership_repo=membership_repo,
     )
-    org_service = OrganizationService(org_repo, membership_repo, campus_repo, dept_repo, auth_service)
+    org_service = OrganizationService(
+        org_repo, membership_repo, campus_repo, dept_repo, auth_service
+    )
 
     org = await org_service.create_organization(user_id=rbac_auth_user.id, name="RBAC Test Org")
     return org.id
@@ -91,7 +94,7 @@ async def test_create_custom_role(rbac_client_mocked: AsyncClient, rbac_test_org
     # Creator is ADMIN, has role.manage
     response = await rbac_client_mocked.post(
         f"/api/v1/organizations/{rbac_test_org}/roles",
-        json={"name": "EDITOR", "description": "Can edit things"}
+        json={"name": "EDITOR", "description": "Can edit things"},
     )
     assert response.status_code == 201
     data = response.json()
@@ -99,7 +102,9 @@ async def test_create_custom_role(rbac_client_mocked: AsyncClient, rbac_test_org
 
 
 @pytest.mark.asyncio
-async def test_unauthorized_action(client: AsyncClient, db_session: AsyncSession, rbac_test_org: str) -> None:
+async def test_unauthorized_action(
+    client: AsyncClient, db_session: AsyncSession, rbac_test_org: str
+) -> None:
     # Create another user without membership
     user_repo = UserRepository(db_session)
     other_user = User(
@@ -114,6 +119,7 @@ async def test_unauthorized_action(client: AsyncClient, db_session: AsyncSession
     await user_repo.save(other_user)
 
     from app.main import app
+
     app.dependency_overrides[get_current_user_id] = lambda: other_user.id
 
     # Try to read roles (should fail, not a member)
@@ -124,7 +130,9 @@ async def test_unauthorized_action(client: AsyncClient, db_session: AsyncSession
 
 
 @pytest.mark.asyncio
-async def test_assign_role(rbac_client_mocked: AsyncClient, db_session: AsyncSession, rbac_test_org: str) -> None:
+async def test_assign_role(
+    rbac_client_mocked: AsyncClient, db_session: AsyncSession, rbac_test_org: str
+) -> None:
     # 1. Create a new user
     user_repo = UserRepository(db_session)
     member_user = User(
@@ -141,11 +149,14 @@ async def test_assign_role(rbac_client_mocked: AsyncClient, db_session: AsyncSes
     # 2. Make them a member of the org (no roles initially)
     membership_repo = OrganizationMembershipRepository(db_session)
     from app.modules.organization.domain.entities import OrganizationMembership
-    await membership_repo.save(OrganizationMembership(
-        id=new_id(),
-        organization_id=rbac_test_org,
-        user_id=member_user.id,
-    ))
+
+    await membership_repo.save(
+        OrganizationMembership(
+            id=new_id(),
+            organization_id=rbac_test_org,
+            user_id=member_user.id,
+        )
+    )
 
     # 3. Get the VIEWER role ID
     roles_resp = await rbac_client_mocked.get(f"/api/v1/organizations/{rbac_test_org}/roles")
@@ -154,6 +165,6 @@ async def test_assign_role(rbac_client_mocked: AsyncClient, db_session: AsyncSes
     # 4. Assign the VIEWER role (using the creator ADMIN who has member.manage)
     assign_resp = await rbac_client_mocked.post(
         f"/api/v1/organizations/{rbac_test_org}/members/{member_user.id}/role",
-        json={"role_id": viewer_role_id}
+        json={"role_id": viewer_role_id},
     )
     assert assign_resp.status_code == 204

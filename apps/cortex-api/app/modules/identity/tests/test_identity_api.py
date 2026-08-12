@@ -88,10 +88,7 @@ async def test_get_me(client: AsyncClient, test_user: User) -> None:
     token = login_resp.json()["access_token"]
 
     # Get profile
-    response = await client.get(
-        "/api/v1/auth/me",
-        headers={"Authorization": f"Bearer {token}"}
-    )
+    response = await client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
     data = response.json()
     assert data["email"] == "test@example.com"

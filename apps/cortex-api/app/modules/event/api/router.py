@@ -48,7 +48,9 @@ async def get_event(
 ):
     # Just list and filter or get direct, we can reuse get_event if we check read perms
     # But list_events handles permissions generically, let's just use get_event and check auth
-    await event_service.auth_service.ensure_permission(current_user_id, organization_id, "event.read")
+    await event_service.auth_service.ensure_permission(
+        current_user_id, organization_id, "event.read"
+    )
     return await event_service.get_event(organization_id, event_id)
 
 
@@ -64,6 +66,7 @@ async def update_event(
 
 
 # Lifecycle Endpoints
+
 
 @router.post("/{event_id}/submit", response_model=EventResponse)
 async def submit_event(
@@ -104,6 +107,7 @@ async def publish_event(
 ):
     return await event_service.publish_event(organization_id, current_user_id, event_id)
 
+
 @router.post("/{event_id}/start", response_model=EventResponse)
 async def start_event(
     organization_id: str,
@@ -136,7 +140,12 @@ async def archive_event(
 
 # Registration Endpoints
 
-@router.post("/{event_id}/register", response_model=EventRegistrationResponse, status_code=status.HTTP_201_CREATED)
+
+@router.post(
+    "/{event_id}/register",
+    response_model=EventRegistrationResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def register_event(
     organization_id: str,
     event_id: str,
@@ -168,7 +177,12 @@ async def list_registrations(
 
 # Attendance Endpoints
 
-@router.post("/{event_id}/attendance", response_model=EventAttendanceResponse, status_code=status.HTTP_201_CREATED)
+
+@router.post(
+    "/{event_id}/attendance",
+    response_model=EventAttendanceResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def record_attendance(
     organization_id: str,
     event_id: str,
@@ -176,7 +190,9 @@ async def record_attendance(
     current_user_id: CurrentUserIdDep,
     event_service: EventServiceDep,
 ):
-    return await event_service.record_attendance(organization_id, current_user_id, event_id, payload)
+    return await event_service.record_attendance(
+        organization_id, current_user_id, event_id, payload
+    )
 
 
 @router.get("/{event_id}/attendance", response_model=list[EventAttendanceResponse])

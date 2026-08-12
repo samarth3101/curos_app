@@ -98,7 +98,9 @@ async def update_organization(
     )
 
 
-@router.post("/{org_id}/campuses", response_model=CampusResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{org_id}/campuses", response_model=CampusResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_campus(
     org_id: str,
     data: CampusCreate,
@@ -141,7 +143,9 @@ async def list_campuses(
     ]
 
 
-@router.post("/{org_id}/departments", response_model=DepartmentResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{org_id}/departments", response_model=DepartmentResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_department(
     org_id: str,
     data: DepartmentCreate,

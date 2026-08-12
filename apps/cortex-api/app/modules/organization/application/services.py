@@ -161,7 +161,12 @@ class OrganizationService:
         return await self._campus_repo.list_by_organization(org_id)
 
     async def create_department(
-        self, org_id: str, user_id: str, name: str, code: str | None = None, campus_id: str | None = None
+        self,
+        org_id: str,
+        user_id: str,
+        name: str,
+        code: str | None = None,
+        campus_id: str | None = None,
     ) -> Department:
         """Create a department within an organization."""
         await self.get_organization(org_id, user_id)  # Validate membership

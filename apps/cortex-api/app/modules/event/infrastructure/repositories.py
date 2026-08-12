@@ -32,7 +32,7 @@ class EventRepository:
             description=model.description,
             workflow_instance_id=model.workflow_instance_id,
             created_at=model.created_at,
-            updated_at=model.updated_at
+            updated_at=model.updated_at,
         )
 
     def _to_model(self, entity: Event) -> EventModel:
@@ -55,8 +55,7 @@ class EventRepository:
 
     async def get_by_id(self, organization_id: str, event_id: str) -> Event | None:
         stmt = select(EventModel).where(
-            EventModel.id == event_id,
-            EventModel.organization_id == organization_id
+            EventModel.id == event_id, EventModel.organization_id == organization_id
         )
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
@@ -87,7 +86,7 @@ class EventRegistrationRepository:
             registered_at=model.registered_at,
             cancelled_at=model.cancelled_at,
             created_at=model.created_at,
-            updated_at=model.updated_at
+            updated_at=model.updated_at,
         )
 
     def _to_model(self, entity: EventRegistration) -> EventRegistrationModel:
@@ -97,13 +96,12 @@ class EventRegistrationRepository:
             user_id=entity.user_id,
             status=entity.status,
             registered_at=entity.registered_at,
-            cancelled_at=entity.cancelled_at
+            cancelled_at=entity.cancelled_at,
         )
 
     async def get_by_event_and_user(self, event_id: str, user_id: str) -> EventRegistration | None:
         stmt = select(EventRegistrationModel).where(
-            EventRegistrationModel.event_id == event_id,
-            EventRegistrationModel.user_id == user_id
+            EventRegistrationModel.event_id == event_id, EventRegistrationModel.user_id == user_id
         )
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
@@ -111,9 +109,14 @@ class EventRegistrationRepository:
 
     async def count_active_registrations(self, event_id: str) -> int:
         from sqlalchemy import func
-        stmt = select(func.count()).select_from(EventRegistrationModel).where(
-            EventRegistrationModel.event_id == event_id,
-            EventRegistrationModel.status == "REGISTERED"
+
+        stmt = (
+            select(func.count())
+            .select_from(EventRegistrationModel)
+            .where(
+                EventRegistrationModel.event_id == event_id,
+                EventRegistrationModel.status == "REGISTERED",
+            )
         )
         result = await self.session.execute(stmt)
         return result.scalar_one()
@@ -143,7 +146,7 @@ class EventAttendanceRepository:
             checked_in_at=model.checked_in_at,
             method=model.method,
             created_at=model.created_at,
-            updated_at=model.updated_at
+            updated_at=model.updated_at,
         )
 
     def _to_model(self, entity: EventAttendance) -> EventAttendanceModel:
@@ -153,11 +156,13 @@ class EventAttendanceRepository:
             registration_id=entity.registration_id,
             user_id=entity.user_id,
             checked_in_at=entity.checked_in_at,
-            method=entity.method
+            method=entity.method,
         )
 
     async def get_by_registration(self, registration_id: str) -> EventAttendance | None:
-        stmt = select(EventAttendanceModel).where(EventAttendanceModel.registration_id == registration_id)
+        stmt = select(EventAttendanceModel).where(
+            EventAttendanceModel.registration_id == registration_id
+        )
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None

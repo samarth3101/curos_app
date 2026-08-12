@@ -42,7 +42,9 @@ def get_organization_service(session: AsyncSession = Depends(get_session)) -> Or
 
     audit_service = AuditService(AuditRepository(session))
 
-    return OrganizationService(org_repo, membership_repo, campus_repo, dept_repo, auth_service, audit_service)
+    return OrganizationService(
+        org_repo, membership_repo, campus_repo, dept_repo, auth_service, audit_service
+    )
 
 
 OrgServiceDep = Annotated[OrganizationService, Depends(get_organization_service)]

@@ -7,7 +7,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class RoleBase(BaseModel):
     name: str = Field(..., max_length=255, description="The name of the role")
-    description: str | None = Field(None, max_length=500, description="Optional description of the role")
+    description: str | None = Field(
+        None, max_length=500, description="Optional description of the role"
+    )
 
 
 class RoleCreate(RoleBase):

@@ -12,6 +12,7 @@ class EventType(str, Enum):
     COMPETITION = "COMPETITION"
     OTHER = "OTHER"
 
+
 class EventStatus(str, Enum):
     DRAFT = "DRAFT"
     SUBMITTED = "SUBMITTED"
@@ -21,14 +22,17 @@ class EventStatus(str, Enum):
     COMPLETED = "COMPLETED"
     ARCHIVED = "ARCHIVED"
 
+
 class RegistrationStatus(str, Enum):
     REGISTERED = "REGISTERED"
     CANCELLED = "CANCELLED"
     ATTENDED = "ATTENDED"
 
+
 class AttendanceMethod(str, Enum):
     QR = "QR"
     MANUAL = "MANUAL"
+
 
 @dataclass
 class Event:
@@ -49,6 +53,7 @@ class Event:
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
+
 @dataclass
 class EventRegistration:
     id: str
@@ -59,6 +64,7 @@ class EventRegistration:
     cancelled_at: datetime | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
+
 
 @dataclass
 class EventAttendance:

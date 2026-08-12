@@ -68,7 +68,7 @@ class OrganizationRepository:
     async def get_by_slug(self, slug: str) -> Organization | None:
         stmt = select(OrganizationModel).where(
             OrganizationModel.slug == slug,
-            OrganizationModel.status != OrganizationStatus.DELETED.value
+            OrganizationModel.status != OrganizationStatus.DELETED.value,
         )
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
@@ -110,25 +110,38 @@ class OrganizationMembershipRepository:
         # Return organizations where the user has an active membership
         stmt = (
             select(OrganizationModel)
-            .join(OrganizationMembershipModel, OrganizationMembershipModel.organization_id == OrganizationModel.id)
+            .join(
+                OrganizationMembershipModel,
+                OrganizationMembershipModel.organization_id == OrganizationModel.id,
+            )
             .where(
                 OrganizationMembershipModel.user_id == user_id,
                 OrganizationMembershipModel.status == MembershipStatus.ACTIVE.value,
-                OrganizationModel.status != OrganizationStatus.DELETED.value
+                OrganizationModel.status != OrganizationStatus.DELETED.value,
             )
         )
         result = await self.session.execute(stmt)
         models = result.scalars().all()
-        return [Organization(
-            id=m.id, created_at=m.created_at, updated_at=m.updated_at,
-            name=m.name, slug=m.slug, type=OrganizationType(m.type), status=OrganizationStatus(m.status)
-        ) for m in models]
+        return [
+            Organization(
+                id=m.id,
+                created_at=m.created_at,
+                updated_at=m.updated_at,
+                name=m.name,
+                slug=m.slug,
+                type=OrganizationType(m.type),
+                status=OrganizationStatus(m.status),
+            )
+            for m in models
+        ]
 
-    async def get_membership(self, organization_id: str, user_id: str) -> OrganizationMembership | None:
+    async def get_membership(
+        self, organization_id: str, user_id: str
+    ) -> OrganizationMembership | None:
         stmt = select(OrganizationMembershipModel).where(
             OrganizationMembershipModel.organization_id == organization_id,
             OrganizationMembershipModel.user_id == user_id,
-            OrganizationMembershipModel.status != MembershipStatus.DELETED.value
+            OrganizationMembershipModel.status != MembershipStatus.DELETED.value,
         )
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
@@ -171,7 +184,7 @@ class CampusRepository:
     async def list_by_organization(self, organization_id: str) -> Sequence[Campus]:
         stmt = select(CampusModel).where(
             CampusModel.organization_id == organization_id,
-            CampusModel.status != CampusStatus.DELETED.value
+            CampusModel.status != CampusStatus.DELETED.value,
         )
         result = await self.session.execute(stmt)
         return [self._to_entity(m) for m in result.scalars().all()]
@@ -213,7 +226,7 @@ class DepartmentRepository:
     async def list_by_organization(self, organization_id: str) -> Sequence[Department]:
         stmt = select(DepartmentModel).where(
             DepartmentModel.organization_id == organization_id,
-            DepartmentModel.status != DepartmentStatus.DELETED.value
+            DepartmentModel.status != DepartmentStatus.DELETED.value,
         )
         result = await self.session.execute(stmt)
         return [self._to_entity(m) for m in result.scalars().all()]

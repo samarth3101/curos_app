@@ -37,8 +37,7 @@ async def auth_headers(auth_user: User, auth_client: AsyncClient) -> dict[str, s
 
     # But for a simpler test, we can just call the /auth/login endpoint
     await auth_client.post(
-        "/api/v1/auth/login",
-        json={"email": auth_user.email, "password": "password123!"}
+        "/api/v1/auth/login", json={"email": auth_user.email, "password": "password123!"}
     )
     # Wait, the auth_user password_hash is "hashed_password", not real.
     pass
@@ -53,6 +52,7 @@ from app.core.dependencies import get_current_user_id
 @pytest.fixture
 def auth_client_mocked(client: AsyncClient, auth_user: User) -> Generator[AsyncClient]:
     from app.main import app
+
     app.dependency_overrides[get_current_user_id] = lambda: auth_user.id
     yield client
     app.dependency_overrides.pop(get_current_user_id, None)
@@ -61,11 +61,7 @@ def auth_client_mocked(client: AsyncClient, auth_user: User) -> Generator[AsyncC
 @pytest.mark.asyncio
 async def test_create_organization(auth_client_mocked: AsyncClient) -> None:
     response = await auth_client_mocked.post(
-        "/api/v1/organizations",
-        json={
-            "name": "Acme Corp",
-            "type": "corporate"
-        }
+        "/api/v1/organizations", json={"name": "Acme Corp", "type": "corporate"}
     )
     assert response.status_code == 201
     data = response.json()
@@ -79,13 +75,11 @@ async def test_create_organization(auth_client_mocked: AsyncClient) -> None:
 async def test_create_organization_duplicate_slug(auth_client_mocked: AsyncClient) -> None:
     # First creation
     await auth_client_mocked.post(
-        "/api/v1/organizations",
-        json={"name": "Beta Corp", "slug": "beta-corp"}
+        "/api/v1/organizations", json={"name": "Beta Corp", "slug": "beta-corp"}
     )
     # Second creation with same slug
     response = await auth_client_mocked.post(
-        "/api/v1/organizations",
-        json={"name": "Beta Corp 2", "slug": "beta-corp"}
+        "/api/v1/organizations", json={"name": "Beta Corp 2", "slug": "beta-corp"}
     )
     assert response.status_code == 422
 
@@ -104,15 +98,12 @@ async def test_list_my_organizations(auth_client_mocked: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_create_and_list_campuses(auth_client_mocked: AsyncClient) -> None:
-    org_resp = await auth_client_mocked.post(
-        "/api/v1/organizations",
-        json={"name": "Campus Org"}
-    )
+    org_resp = await auth_client_mocked.post("/api/v1/organizations", json={"name": "Campus Org"})
     org_id = org_resp.json()["id"]
 
     campus_resp = await auth_client_mocked.post(
         f"/api/v1/organizations/{org_id}/campuses",
-        json={"name": "Main Campus", "address": "123 Main St"}
+        json={"name": "Main Campus", "address": "123 Main St"},
     )
     assert campus_resp.status_code == 201
     campus_data = campus_resp.json()
@@ -125,15 +116,11 @@ async def test_create_and_list_campuses(auth_client_mocked: AsyncClient) -> None
 
 @pytest.mark.asyncio
 async def test_create_and_list_departments(auth_client_mocked: AsyncClient) -> None:
-    org_resp = await auth_client_mocked.post(
-        "/api/v1/organizations",
-        json={"name": "Dept Org"}
-    )
+    org_resp = await auth_client_mocked.post("/api/v1/organizations", json={"name": "Dept Org"})
     org_id = org_resp.json()["id"]
 
     dept_resp = await auth_client_mocked.post(
-        f"/api/v1/organizations/{org_id}/departments",
-        json={"name": "Engineering", "code": "ENG"}
+        f"/api/v1/organizations/{org_id}/departments", json={"name": "Engineering", "code": "ENG"}
     )
     assert dept_resp.status_code == 201
     dept_data = dept_resp.json()

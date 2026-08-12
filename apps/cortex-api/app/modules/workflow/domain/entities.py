@@ -34,6 +34,7 @@ class WorkflowTaskStatus(str, enum.Enum):
 @dataclass
 class WorkflowDefinition:
     """A configuration for a workflow process."""
+
     id: str
     organization_id: str
     name: str
@@ -47,6 +48,7 @@ class WorkflowDefinition:
 @dataclass
 class WorkflowState:
     """A single state in a workflow."""
+
     id: str
     workflow_definition_id: str
     name: str
@@ -59,6 +61,7 @@ class WorkflowState:
 @dataclass
 class WorkflowTransition:
     """A valid transition between states."""
+
     id: str
     workflow_definition_id: str
     from_state_id: str
@@ -72,6 +75,7 @@ class WorkflowTransition:
 @dataclass
 class WorkflowInstance:
     """A running instance of a workflow."""
+
     id: str
     organization_id: str
     workflow_definition_id: str
@@ -87,6 +91,7 @@ class WorkflowInstance:
 @dataclass
 class WorkflowTask:
     """A task assigned during a workflow."""
+
     id: str
     workflow_instance_id: str
     title: str
@@ -102,6 +107,7 @@ class WorkflowTask:
 @dataclass
 class WorkflowExecution:
     """Immutable history of workflow transitions."""
+
     id: str
     workflow_instance_id: str
     actor_id: str

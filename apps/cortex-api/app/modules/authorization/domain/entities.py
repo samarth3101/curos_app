@@ -37,7 +37,7 @@ class Permission(BaseEntity):
     key: str  # e.g., 'organization.read', 'member.manage'
     description: str | None = None
     resource: str  # e.g., 'organization', 'member'
-    action: str    # e.g., 'read', 'manage'
+    action: str  # e.g., 'read', 'manage'
 
 
 @dataclass(kw_only=True)

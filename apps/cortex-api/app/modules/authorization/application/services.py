@@ -36,7 +36,9 @@ class AuthorizationService:
         self.membership_repo = membership_repo
         self.audit_service = audit_service
 
-    async def create_role(self, organization_id: str, name: str, description: str | None = None) -> Role:
+    async def create_role(
+        self, organization_id: str, name: str, description: str | None = None
+    ) -> Role:
         """Create a new role for an organization."""
         existing_role = await self.role_repo.get_by_name(organization_id, name)
         if existing_role:
@@ -98,7 +100,7 @@ class AuthorizationService:
                 key=permission_key,
                 resource=permission_key.split(".")[0],
                 action=permission_key.split(".")[1],
-                description=f"Auto-created permission: {permission_key}"
+                description=f"Auto-created permission: {permission_key}",
             )
             permission = await self.permission_repo.save(permission)
 
@@ -114,26 +116,43 @@ class AuthorizationService:
         # Note: In a real system, you might want a predefined map of default permissions
         # per role. For simplicity, we just grant a few basics here.
 
-        admin_role = await self.create_role(organization_id, "ADMIN", "Full organization-level management")
+        admin_role = await self.create_role(
+            organization_id, "ADMIN", "Full organization-level management"
+        )
         member_role = await self.create_role(organization_id, "MEMBER", "Normal operational access")
         viewer_role = await self.create_role(organization_id, "VIEWER", "Read-only access")
 
         # Admin gets everything
         for p in [
-            "organization.read", "organization.update",
-            "member.read", "member.manage",
-            "role.read", "role.manage",
-            "event.create", "event.read", "event.update", "event.delete",
-            "event.submit", "event.approve", "event.publish", "event.manage",
-            "event.registration.read", "event.attendance.manage"
+            "organization.read",
+            "organization.update",
+            "member.read",
+            "member.manage",
+            "role.read",
+            "role.manage",
+            "event.create",
+            "event.read",
+            "event.update",
+            "event.delete",
+            "event.submit",
+            "event.approve",
+            "event.publish",
+            "event.manage",
+            "event.registration.read",
+            "event.attendance.manage",
         ]:
             await self.grant_permission_to_role(admin_role.id, p)
 
         # Member gets read and some actions
         for p in [
-            "organization.read", "member.read",
-            "event.read", "event.create", "event.update", "event.submit",
-            "event.registration.read", "event.attendance.manage"
+            "organization.read",
+            "member.read",
+            "event.read",
+            "event.create",
+            "event.update",
+            "event.submit",
+            "event.registration.read",
+            "event.attendance.manage",
         ]:
             await self.grant_permission_to_role(member_role.id, p)
 
@@ -147,7 +166,9 @@ class AuthorizationService:
         """Get all roles assigned to a membership."""
         return await self.membership_role_repo.list_roles_for_membership(membership_id)
 
-    async def check_permission(self, user_id: str, organization_id: str, permission_key: str) -> bool:
+    async def check_permission(
+        self, user_id: str, organization_id: str, permission_key: str
+    ) -> bool:
         """
         Check if a user has a specific permission within an organization.
         Raises UnauthorizedDomainError if the user is not a member or lacks permission.
@@ -168,6 +189,8 @@ class AuthorizationService:
 
         raise ForbiddenError(f"User lacks required permission: {permission_key}")
 
-    async def ensure_permission(self, user_id: str, organization_id: str, permission_key: str) -> None:
+    async def ensure_permission(
+        self, user_id: str, organization_id: str, permission_key: str
+    ) -> None:
         """Alias for check_permission to express intent of aborting if not allowed."""
         await self.check_permission(user_id, organization_id, permission_key)

@@ -79,7 +79,9 @@ class WorkflowService:
     async def list_definitions(self, organization_id: str) -> list[WorkflowDefinition]:
         return await self.definition_repo.list_by_organization(organization_id)
 
-    async def publish_definition(self, organization_id: str, actor_id: str, definition_id: str) -> WorkflowDefinition:
+    async def publish_definition(
+        self, organization_id: str, actor_id: str, definition_id: str
+    ) -> WorkflowDefinition:
         definition = await self.get_definition(organization_id, definition_id)
         if definition.status != WorkflowDefinitionStatus.DRAFT:
             raise ValidationDomainError("Only draft workflows can be published")
@@ -126,7 +128,13 @@ class WorkflowService:
 
     # --- Transitions ---
     async def add_transition(
-        self, organization_id: str, definition_id: str, from_state_id: str, to_state_id: str, action: str, required_permission: str | None
+        self,
+        organization_id: str,
+        definition_id: str,
+        from_state_id: str,
+        to_state_id: str,
+        action: str,
+        required_permission: str | None,
     ) -> WorkflowTransition:
         definition = await self.get_definition(organization_id, definition_id)
         if definition.status != WorkflowDefinitionStatus.DRAFT:
@@ -150,22 +158,33 @@ class WorkflowService:
         )
         return await self.transition_repo.save(transition)
 
-    async def list_transitions(self, organization_id: str, definition_id: str) -> list[WorkflowTransition]:
+    async def list_transitions(
+        self, organization_id: str, definition_id: str
+    ) -> list[WorkflowTransition]:
         await self.get_definition(organization_id, definition_id)
         return await self.transition_repo.list_by_definition(definition_id)
 
     # --- Instances ---
     async def start_instance(
-        self, organization_id: str, actor_id: str, definition_id: str, resource_type: str, resource_id: str
+        self,
+        organization_id: str,
+        actor_id: str,
+        definition_id: str,
+        resource_type: str,
+        resource_id: str,
     ) -> WorkflowInstance:
         definition = await self.get_definition(organization_id, definition_id)
         if definition.status != WorkflowDefinitionStatus.PUBLISHED:
             raise ValidationDomainError("Cannot start an instance of a draft workflow")
 
         # Check if one already exists for this resource
-        existing = await self.instance_repo.get_by_resource(organization_id, resource_type, resource_id)
+        existing = await self.instance_repo.get_by_resource(
+            organization_id, resource_type, resource_id
+        )
         if existing and existing.status == WorkflowInstanceStatus.ACTIVE:
-            raise ValidationDomainError("An active workflow instance already exists for this resource")
+            raise ValidationDomainError(
+                "An active workflow instance already exists for this resource"
+            )
 
         states = await self.state_repo.list_by_definition(definition_id)
         initial_states = [s for s in states if s.type == WorkflowStateType.INITIAL]
@@ -186,15 +205,17 @@ class WorkflowService:
         saved = await self.instance_repo.save(instance)
 
         # Execution log
-        await self.execution_repo.save(WorkflowExecution(
-            id=new_id(),
-            workflow_instance_id=saved.id,
-            actor_id=actor_id,
-            action="start",
-            from_state=None,
-            to_state=initial_state.key,
-            metadata={"resource_type": resource_type, "resource_id": resource_id},
-        ))
+        await self.execution_repo.save(
+            WorkflowExecution(
+                id=new_id(),
+                workflow_instance_id=saved.id,
+                actor_id=actor_id,
+                action="start",
+                from_state=None,
+                to_state=initial_state.key,
+                metadata={"resource_type": resource_type, "resource_id": resource_id},
+            )
+        )
 
         await self.audit_service.record_action(
             organization_id=organization_id,
@@ -214,17 +235,25 @@ class WorkflowService:
         return instance
 
     async def execute_transition(
-        self, organization_id: str, actor_id: str, instance_id: str, action: str, metadata: dict[str, Any]
+        self,
+        organization_id: str,
+        actor_id: str,
+        instance_id: str,
+        action: str,
+        metadata: dict[str, Any],
     ) -> WorkflowInstance:
         instance = await self.get_instance(organization_id, instance_id)
         if instance.status != WorkflowInstanceStatus.ACTIVE:
-            raise ValidationDomainError(f"Cannot transition an instance in {instance.status.value} status")
+            raise ValidationDomainError(
+                f"Cannot transition an instance in {instance.status.value} status"
+            )
 
         transitions = await self.transition_repo.list_by_definition(instance.workflow_definition_id)
 
         # Find valid transition matching the action and current state
         valid_transitions = [
-            t for t in transitions
+            t
+            for t in transitions
             if t.from_state_id == instance.current_state_id and t.action == action
         ]
 
@@ -235,13 +264,15 @@ class WorkflowService:
 
         # RBAC Check
         if transition.required_permission:
-            await self.auth_service.ensure_permission(actor_id, organization_id, transition.required_permission)
+            await self.auth_service.ensure_permission(
+                actor_id, organization_id, transition.required_permission
+            )
 
         # Fetch states for logging
         current_state = await self.state_repo.get_by_id(instance.current_state_id)
         next_state = await self.state_repo.get_by_id(transition.to_state_id)
         if not current_state or not next_state:
-             raise ValidationDomainError("Corrupted workflow definition: state not found")
+            raise ValidationDomainError("Corrupted workflow definition: state not found")
 
         # Apply transition
         instance.current_state_id = transition.to_state_id
@@ -253,15 +284,17 @@ class WorkflowService:
         saved = await self.instance_repo.save(instance)
 
         # Immutable history
-        await self.execution_repo.save(WorkflowExecution(
-            id=new_id(),
-            workflow_instance_id=saved.id,
-            actor_id=actor_id,
-            action=action,
-            from_state=current_state.key,
-            to_state=next_state.key,
-            metadata=metadata,
-        ))
+        await self.execution_repo.save(
+            WorkflowExecution(
+                id=new_id(),
+                workflow_instance_id=saved.id,
+                actor_id=actor_id,
+                action=action,
+                from_state=current_state.key,
+                to_state=next_state.key,
+                metadata=metadata,
+            )
+        )
 
         await self.audit_service.record_action(
             organization_id=organization_id,
@@ -273,12 +306,12 @@ class WorkflowService:
             metadata={
                 "action": action,
                 "from_state": current_state.key,
-                "to_state": next_state.key
+                "to_state": next_state.key,
             },
         )
 
         if saved.status == WorkflowInstanceStatus.COMPLETED:
-             await self.audit_service.record_action(
+            await self.audit_service.record_action(
                 organization_id=organization_id,
                 actor_id=actor_id,
                 actor_type="user",
@@ -289,15 +322,22 @@ class WorkflowService:
 
         return saved
 
-    async def list_executions(self, organization_id: str, instance_id: str) -> list[WorkflowExecution]:
+    async def list_executions(
+        self, organization_id: str, instance_id: str
+    ) -> list[WorkflowExecution]:
         await self.get_instance(organization_id, instance_id)
         return await self.execution_repo.list_by_instance(instance_id)
 
     # --- Tasks ---
     async def create_task(
-        self, organization_id: str, actor_id: str, instance_id: str, title: str,
-        assigned_user_id: str | None = None, assigned_role_id: str | None = None,
-        due_at: datetime | None = None
+        self,
+        organization_id: str,
+        actor_id: str,
+        instance_id: str,
+        title: str,
+        assigned_user_id: str | None = None,
+        assigned_role_id: str | None = None,
+        due_at: datetime | None = None,
     ) -> WorkflowTask:
         instance = await self.get_instance(organization_id, instance_id)
 
@@ -326,7 +366,9 @@ class WorkflowService:
         await self.get_instance(organization_id, instance_id)
         return await self.task_repo.list_by_instance(instance_id)
 
-    async def complete_task(self, organization_id: str, actor_id: str, instance_id: str, task_id: str) -> WorkflowTask:
+    async def complete_task(
+        self, organization_id: str, actor_id: str, instance_id: str, task_id: str
+    ) -> WorkflowTask:
         await self.get_instance(organization_id, instance_id)
         task = await self.task_repo.get_by_id(task_id)
         if not task or task.workflow_instance_id != instance_id:
@@ -342,13 +384,15 @@ class WorkflowService:
             raise ForbiddenError("Task is assigned to another user")
 
         if task.assigned_role_id:
-            membership = await self.auth_service.membership_repo.get_membership(organization_id, actor_id)
+            membership = await self.auth_service.membership_repo.get_membership(
+                organization_id, actor_id
+            )
             if not membership:
                 raise ForbiddenError("User is not a member of this organization")
 
             roles = await self.auth_service.get_membership_roles(membership.id)
             if not any(r.id == task.assigned_role_id for r in roles):
-                 raise ForbiddenError("User does not have the required role to complete this task")
+                raise ForbiddenError("User does not have the required role to complete this task")
 
         task.status = WorkflowTaskStatus.COMPLETED
         task.completed_at = datetime.now(UTC)

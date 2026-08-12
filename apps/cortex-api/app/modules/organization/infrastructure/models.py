@@ -18,7 +18,9 @@ class OrganizationModel(Base):
 class CampusModel(Base):
     __tablename__ = "campuses"
 
-    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), index=True, nullable=False)
+    organization_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("organizations.id", ondelete="CASCADE"), index=True, nullable=False
+    )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     address: Mapped[str | None] = mapped_column(String(500), nullable=True)
     status: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -27,8 +29,12 @@ class CampusModel(Base):
 class DepartmentModel(Base):
     __tablename__ = "departments"
 
-    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), index=True, nullable=False)
-    campus_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("campuses.id", ondelete="SET NULL"), index=True, nullable=True)
+    organization_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("organizations.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    campus_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("campuses.id", ondelete="SET NULL"), index=True, nullable=True
+    )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     code: Mapped[str | None] = mapped_column(String(50), nullable=True)
     status: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -37,6 +43,10 @@ class DepartmentModel(Base):
 class OrganizationMembershipModel(Base):
     __tablename__ = "organization_memberships"
 
-    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), index=True, nullable=False)
-    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("identity_users.id", ondelete="CASCADE"), index=True, nullable=False)
+    organization_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("organizations.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    user_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("identity_users.id", ondelete="CASCADE"), index=True, nullable=False
+    )
     status: Mapped[str] = mapped_column(String(50), nullable=False)

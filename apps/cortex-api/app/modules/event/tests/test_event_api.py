@@ -22,23 +22,41 @@ from app.shared.types import new_id
 def org_id() -> str:
     return new_id()
 
+
 @pytest.fixture
 def user_id() -> str:
     return new_id()
 
+
 @pytest.fixture
 async def setup_test_data(db_session: AsyncSession, org_id: str, user_id: str):
     # Create User
-    user = UserModel(id=user_id, email=f"event_test_{user_id}@example.com", password_hash="hash", first_name="Test", last_name="Event User", role="USER", status="ACTIVE")
+    user = UserModel(
+        id=user_id,
+        email=f"event_test_{user_id}@example.com",
+        password_hash="hash",
+        first_name="Test",
+        last_name="Event User",
+        role="USER",
+        status="ACTIVE",
+    )
     db_session.add(user)
 
     # Create Org
-    org = OrganizationModel(id=org_id, name=f"Event Test Org {org_id}", slug=f"evt-test-{org_id}", type="UNIVERSITY", status="ACTIVE")
+    org = OrganizationModel(
+        id=org_id,
+        name=f"Event Test Org {org_id}",
+        slug=f"evt-test-{org_id}",
+        type="UNIVERSITY",
+        status="ACTIVE",
+    )
     db_session.add(org)
     await db_session.flush()
 
     # Create Membership
-    membership = OrganizationMembershipModel(id=new_id(), organization_id=org_id, user_id=user_id, status="active")
+    membership = OrganizationMembershipModel(
+        id=new_id(), organization_id=org_id, user_id=user_id, status="active"
+    )
     db_session.add(membership)
     await db_session.flush()
 
@@ -48,9 +66,20 @@ async def setup_test_data(db_session: AsyncSession, org_id: str, user_id: str):
     await db_session.flush()
     db_session.add(MembershipRoleModel(id=new_id(), membership_id=membership.id, role_id=role.id))
 
-    perms = ["event.create", "event.read", "event.update", "event.submit", "event.approve", "event.publish", "event.registration.read", "event.attendance.manage", "event.manage"]
+    perms = [
+        "event.create",
+        "event.read",
+        "event.update",
+        "event.submit",
+        "event.approve",
+        "event.publish",
+        "event.registration.read",
+        "event.attendance.manage",
+        "event.manage",
+    ]
     for p in perms:
         from sqlalchemy import select
+
         stmt = select(PermissionModel).where(PermissionModel.key == p)
         result = await db_session.execute(stmt)
         perm = result.scalar_one_or_none()
@@ -63,6 +92,7 @@ async def setup_test_data(db_session: AsyncSession, org_id: str, user_id: str):
     await db_session.commit()
     return {"org_id": org_id, "user_id": user_id}
 
+
 @pytest.mark.asyncio
 async def test_event_lifecycle(client: AsyncClient, setup_test_data, db_session: AsyncSession):
     org_id = setup_test_data["org_id"]
@@ -71,6 +101,7 @@ async def test_event_lifecycle(client: AsyncClient, setup_test_data, db_session:
     # Mock current user
     from app.core.dependencies import get_current_user_id
     from app.main import app
+
     app.dependency_overrides[get_current_user_id] = lambda: user_id
 
     start_at = (datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=1)).isoformat()
@@ -86,8 +117,8 @@ async def test_event_lifecycle(client: AsyncClient, setup_test_data, db_session:
             "start_at": start_at,
             "end_at": end_at,
             "capacity": 100,
-            "description": "Annual tech symposium"
-        }
+            "description": "Annual tech symposium",
+        },
     )
     assert resp.status_code == 201
     event_id = resp.json()["id"]
@@ -95,8 +126,7 @@ async def test_event_lifecycle(client: AsyncClient, setup_test_data, db_session:
 
     # 2. Update Event
     resp = await client.put(
-        f"/api/v1/organizations/{org_id}/events/{event_id}",
-        json={"capacity": 150}
+        f"/api/v1/organizations/{org_id}/events/{event_id}", json={"capacity": 150}
     )
     assert resp.status_code == 200
     assert resp.json()["capacity"] == 150
@@ -124,7 +154,7 @@ async def test_event_lifecycle(client: AsyncClient, setup_test_data, db_session:
     # 7. Record Attendance
     resp = await client.post(
         f"/api/v1/organizations/{org_id}/events/{event_id}/attendance",
-        json={"user_id": user_id, "method": "QR"}
+        json={"user_id": user_id, "method": "QR"},
     )
     assert resp.status_code == 201
 

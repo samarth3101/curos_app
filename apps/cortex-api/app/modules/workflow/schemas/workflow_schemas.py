@@ -16,10 +16,12 @@ class WorkflowDefinitionCreate(BaseModel):
     name: str = Field(..., max_length=255)
     description: str | None = Field(None, max_length=1000)
 
+
 class WorkflowDefinitionUpdate(BaseModel):
     name: str | None = Field(None, max_length=255)
     description: str | None = Field(None, max_length=1000)
     status: WorkflowDefinitionStatus | None = None
+
 
 class WorkflowDefinitionResponse(BaseModel):
     id: str
@@ -40,6 +42,7 @@ class WorkflowStateCreate(BaseModel):
     key: str = Field(..., max_length=100)
     type: WorkflowStateType
 
+
 class WorkflowStateResponse(BaseModel):
     id: str
     workflow_definition_id: str
@@ -59,6 +62,7 @@ class WorkflowTransitionCreate(BaseModel):
     action: str = Field(..., max_length=100)
     required_permission: str | None = Field(None, max_length=100)
 
+
 class WorkflowTransitionResponse(BaseModel):
     id: str
     workflow_definition_id: str
@@ -77,6 +81,7 @@ class WorkflowInstanceStart(BaseModel):
     workflow_definition_id: str
     resource_type: str = Field(..., max_length=100)
     resource_id: str
+
 
 class WorkflowInstanceResponse(BaseModel):
     id: str
@@ -104,6 +109,7 @@ class WorkflowTaskCreate(BaseModel):
     assigned_user_id: str | None = None
     assigned_role_id: str | None = None
     due_at: datetime | None = None
+
 
 class WorkflowTaskResponse(BaseModel):
     id: str

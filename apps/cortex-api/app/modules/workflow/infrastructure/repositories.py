@@ -74,9 +74,11 @@ class WorkflowDefinitionRepository:
         return self._to_entity(model)
 
     async def list_by_organization(self, organization_id: str) -> list[WorkflowDefinition]:
-        stmt = select(WorkflowDefinitionModel).where(
-            WorkflowDefinitionModel.organization_id == organization_id
-        ).order_by(WorkflowDefinitionModel.created_at.desc())
+        stmt = (
+            select(WorkflowDefinitionModel)
+            .where(WorkflowDefinitionModel.organization_id == organization_id)
+            .order_by(WorkflowDefinitionModel.created_at.desc())
+        )
         result = await self.session.execute(stmt)
         return [self._to_entity(m) for m in result.scalars().all()]
 
@@ -200,7 +202,9 @@ class WorkflowInstanceRepository:
         model = await self.session.get(WorkflowInstanceModel, instance_id)
         return self._to_entity(model) if model else None
 
-    async def get_by_resource(self, organization_id: str, resource_type: str, resource_id: str) -> WorkflowInstance | None:
+    async def get_by_resource(
+        self, organization_id: str, resource_type: str, resource_id: str
+    ) -> WorkflowInstance | None:
         stmt = select(WorkflowInstanceModel).where(
             WorkflowInstanceModel.organization_id == organization_id,
             WorkflowInstanceModel.resource_type == resource_type,
@@ -280,13 +284,16 @@ class WorkflowTaskRepository:
         return self._to_entity(model)
 
     async def list_by_instance(self, instance_id: str) -> list[WorkflowTask]:
-        stmt = select(WorkflowTaskModel).where(WorkflowTaskModel.workflow_instance_id == instance_id)
+        stmt = select(WorkflowTaskModel).where(
+            WorkflowTaskModel.workflow_instance_id == instance_id
+        )
         result = await self.session.execute(stmt)
         return [self._to_entity(m) for m in result.scalars().all()]
 
 
 class WorkflowExecutionRepository:
     """Immutable log of workflow transitions."""
+
     def __init__(self, session: "AsyncSession") -> None:
         self.session = session
 
@@ -318,8 +325,10 @@ class WorkflowExecutionRepository:
         return self._to_entity(model)
 
     async def list_by_instance(self, instance_id: str) -> list[WorkflowExecution]:
-        stmt = select(WorkflowExecutionModel).where(
-            WorkflowExecutionModel.workflow_instance_id == instance_id
-        ).order_by(WorkflowExecutionModel.timestamp.asc())
+        stmt = (
+            select(WorkflowExecutionModel)
+            .where(WorkflowExecutionModel.workflow_instance_id == instance_id)
+            .order_by(WorkflowExecutionModel.timestamp.asc())
+        )
         result = await self.session.execute(stmt)
         return [self._to_entity(m) for m in result.scalars().all()]

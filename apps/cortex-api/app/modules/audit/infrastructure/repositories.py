@@ -73,7 +73,11 @@ class AuditRepository:
     ) -> tuple[Sequence[AuditRecord], int]:
         """List audit records for an organization with optional filtering and pagination."""
         stmt = select(AuditModel).where(AuditModel.organization_id == organization_id)
-        count_stmt = select(func.count()).select_from(AuditModel).where(AuditModel.organization_id == organization_id)
+        count_stmt = (
+            select(func.count())
+            .select_from(AuditModel)
+            .where(AuditModel.organization_id == organization_id)
+        )
 
         if actor_id:
             stmt = stmt.where(AuditModel.actor_id == actor_id)

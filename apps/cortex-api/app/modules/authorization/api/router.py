@@ -23,9 +23,11 @@ from app.modules.organization.infrastructure.repositories import OrganizationMem
 
 router = APIRouter(prefix="/organizations/{organization_id}", tags=["Authorization"])
 
+
 def get_authorization_service(session: AsyncSession = Depends(get_session)) -> AuthorizationService:
     from app.modules.audit.application.services import AuditService
     from app.modules.audit.infrastructure.repositories import AuditRepository
+
     audit_service = AuditService(AuditRepository(session))
 
     return AuthorizationService(

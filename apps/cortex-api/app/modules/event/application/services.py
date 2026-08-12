@@ -30,7 +30,7 @@ class EventService:
         attendance_repo: EventAttendanceRepository,
         workflow_service: WorkflowService,
         auth_service: AuthorizationService,
-        audit_service: AuditService
+        audit_service: AuditService,
     ) -> None:
         self.event_repo = event_repo
         self.registration_repo = registration_repo
@@ -45,7 +45,9 @@ class EventService:
             raise NotFoundError(f"Event {event_id} not found in organization {organization_id}")
         return event
 
-    async def create_event(self, organization_id: str, actor_id: str, payload: EventCreate) -> Event:
+    async def create_event(
+        self, organization_id: str, actor_id: str, payload: EventCreate
+    ) -> Event:
         await self.auth_service.ensure_permission(actor_id, organization_id, "event.create")
 
         # Verify dates
@@ -53,7 +55,9 @@ class EventService:
             raise ValidationDomainError("Event end time must be after start time")
 
         # Get or seed workflow definition
-        workflow_def_id = await seed_event_workflow(organization_id, actor_id, self.workflow_service)
+        workflow_def_id = await seed_event_workflow(
+            organization_id, actor_id, self.workflow_service
+        )
 
         event = Event(
             id=new_id(),
@@ -68,7 +72,7 @@ class EventService:
             status=EventStatus.DRAFT,
             campus_id=payload.campus_id,
             department_id=payload.department_id,
-            description=payload.description
+            description=payload.description,
         )
 
         saved_event = await self.event_repo.save(event)
@@ -79,7 +83,7 @@ class EventService:
             actor_id=actor_id,
             definition_id=workflow_def_id,
             resource_type="event",
-            resource_id=saved_event.id
+            resource_id=saved_event.id,
         )
 
         saved_event.workflow_instance_id = workflow_instance.id
@@ -92,11 +96,13 @@ class EventService:
             actor_type="user",
             resource_type="event",
             resource_id=saved_event.id,
-            metadata={"title": saved_event.title}
+            metadata={"title": saved_event.title},
         )
         return saved_event
 
-    async def update_event(self, organization_id: str, actor_id: str, event_id: str, payload: EventUpdate) -> Event:
+    async def update_event(
+        self, organization_id: str, actor_id: str, event_id: str, payload: EventUpdate
+    ) -> Event:
         await self.auth_service.ensure_permission(actor_id, organization_id, "event.update")
         event = await self.get_event(organization_id, event_id)
 
@@ -133,7 +139,7 @@ class EventService:
             actor_id=actor_id,
             actor_type="user",
             resource_type="event",
-            resource_id=saved_event.id
+            resource_id=saved_event.id,
         )
         return saved_event
 
@@ -142,7 +148,15 @@ class EventService:
         await self.auth_service.ensure_permission(actor_id, organization_id, "event.read")
         return await self.event_repo.list_events(organization_id)
 
-    async def _execute_lifecycle_transition(self, organization_id: str, actor_id: str, event_id: str, action: str, permission: str, new_status: EventStatus) -> Event:
+    async def _execute_lifecycle_transition(
+        self,
+        organization_id: str,
+        actor_id: str,
+        event_id: str,
+        action: str,
+        permission: str,
+        new_status: EventStatus,
+    ) -> Event:
         await self.auth_service.ensure_permission(actor_id, organization_id, permission)
         event = await self.get_event(organization_id, event_id)
 
@@ -154,7 +168,7 @@ class EventService:
             actor_id=actor_id,
             instance_id=event.workflow_instance_id,
             action=action,
-            metadata={}
+            metadata={},
         )
 
         event.status = new_status
@@ -162,37 +176,53 @@ class EventService:
 
         await self.audit_service.record_action(
             organization_id=organization_id,
-            action=f"event.{action}d", # e.g. event.submitted
+            action=f"event.{action}d",  # e.g. event.submitted
             actor_id=actor_id,
             actor_type="user",
             resource_type="event",
-            resource_id=saved_event.id
+            resource_id=saved_event.id,
         )
 
         return saved_event
 
     async def submit_event(self, organization_id: str, actor_id: str, event_id: str) -> Event:
-        return await self._execute_lifecycle_transition(organization_id, actor_id, event_id, "submit", "event.submit", EventStatus.SUBMITTED)
+        return await self._execute_lifecycle_transition(
+            organization_id, actor_id, event_id, "submit", "event.submit", EventStatus.SUBMITTED
+        )
 
     async def approve_event(self, organization_id: str, actor_id: str, event_id: str) -> Event:
-        return await self._execute_lifecycle_transition(organization_id, actor_id, event_id, "approve", "event.approve", EventStatus.APPROVED)
+        return await self._execute_lifecycle_transition(
+            organization_id, actor_id, event_id, "approve", "event.approve", EventStatus.APPROVED
+        )
 
     async def reject_event(self, organization_id: str, actor_id: str, event_id: str) -> Event:
-        return await self._execute_lifecycle_transition(organization_id, actor_id, event_id, "reject", "event.approve", EventStatus.DRAFT)
+        return await self._execute_lifecycle_transition(
+            organization_id, actor_id, event_id, "reject", "event.approve", EventStatus.DRAFT
+        )
 
     async def publish_event(self, organization_id: str, actor_id: str, event_id: str) -> Event:
-        return await self._execute_lifecycle_transition(organization_id, actor_id, event_id, "publish", "event.publish", EventStatus.PUBLISHED)
+        return await self._execute_lifecycle_transition(
+            organization_id, actor_id, event_id, "publish", "event.publish", EventStatus.PUBLISHED
+        )
 
     async def start_event(self, organization_id: str, actor_id: str, event_id: str) -> Event:
-        return await self._execute_lifecycle_transition(organization_id, actor_id, event_id, "start", "event.manage", EventStatus.ONGOING)
+        return await self._execute_lifecycle_transition(
+            organization_id, actor_id, event_id, "start", "event.manage", EventStatus.ONGOING
+        )
 
     async def complete_event(self, organization_id: str, actor_id: str, event_id: str) -> Event:
-        return await self._execute_lifecycle_transition(organization_id, actor_id, event_id, "complete", "event.manage", EventStatus.COMPLETED)
+        return await self._execute_lifecycle_transition(
+            organization_id, actor_id, event_id, "complete", "event.manage", EventStatus.COMPLETED
+        )
 
     async def archive_event(self, organization_id: str, actor_id: str, event_id: str) -> Event:
-        return await self._execute_lifecycle_transition(organization_id, actor_id, event_id, "archive", "event.manage", EventStatus.ARCHIVED)
+        return await self._execute_lifecycle_transition(
+            organization_id, actor_id, event_id, "archive", "event.manage", EventStatus.ARCHIVED
+        )
 
-    async def register_for_event(self, organization_id: str, actor_id: str, event_id: str) -> EventRegistration:
+    async def register_for_event(
+        self, organization_id: str, actor_id: str, event_id: str
+    ) -> EventRegistration:
         # Check membership implies event.read usually, but registration doesn't require explicit "event.register"
         # as it's implied for members, we'll just check "event.read".
         await self.auth_service.ensure_permission(actor_id, organization_id, "event.read")
@@ -220,7 +250,7 @@ class EventService:
                 event_id=event_id,
                 user_id=actor_id,
                 status=RegistrationStatus.REGISTERED,
-                registered_at=datetime.datetime.now(datetime.UTC)
+                registered_at=datetime.datetime.now(datetime.UTC),
             )
             reg = await self.registration_repo.save(reg)
 
@@ -230,11 +260,13 @@ class EventService:
             actor_id=actor_id,
             actor_type="user",
             resource_type="event",
-            resource_id=event_id
+            resource_id=event_id,
         )
         return reg
 
-    async def cancel_registration(self, organization_id: str, actor_id: str, event_id: str) -> EventRegistration:
+    async def cancel_registration(
+        self, organization_id: str, actor_id: str, event_id: str
+    ) -> EventRegistration:
         await self.auth_service.ensure_permission(actor_id, organization_id, "event.read")
 
         reg = await self.registration_repo.get_by_event_and_user(event_id, actor_id)
@@ -251,18 +283,26 @@ class EventService:
             actor_id=actor_id,
             actor_type="user",
             resource_type="event",
-            resource_id=event_id
+            resource_id=event_id,
         )
         return reg
 
-    async def list_registrations(self, organization_id: str, actor_id: str, event_id: str) -> Sequence[EventRegistration]:
-        await self.auth_service.ensure_permission(actor_id, organization_id, "event.registration.read")
+    async def list_registrations(
+        self, organization_id: str, actor_id: str, event_id: str
+    ) -> Sequence[EventRegistration]:
+        await self.auth_service.ensure_permission(
+            actor_id, organization_id, "event.registration.read"
+        )
         # Validate event exists
         await self.get_event(organization_id, event_id)
         return await self.registration_repo.list_for_event(event_id)
 
-    async def record_attendance(self, organization_id: str, actor_id: str, event_id: str, payload: EventAttendanceCreate) -> EventAttendance:
-        await self.auth_service.ensure_permission(actor_id, organization_id, "event.attendance.manage")
+    async def record_attendance(
+        self, organization_id: str, actor_id: str, event_id: str, payload: EventAttendanceCreate
+    ) -> EventAttendance:
+        await self.auth_service.ensure_permission(
+            actor_id, organization_id, "event.attendance.manage"
+        )
 
         event = await self.get_event(organization_id, event_id)
         if event.status not in (EventStatus.PUBLISHED, EventStatus.ONGOING):
@@ -282,7 +322,7 @@ class EventService:
             registration_id=reg.id,
             user_id=payload.user_id,
             checked_in_at=datetime.datetime.now(datetime.UTC),
-            method=payload.method
+            method=payload.method,
         )
 
         saved_attendance = await self.attendance_repo.save(attendance)
@@ -297,12 +337,16 @@ class EventService:
             actor_type="user",
             resource_type="event",
             resource_id=event_id,
-            metadata={"user_id": payload.user_id, "method": payload.method.value}
+            metadata={"user_id": payload.user_id, "method": payload.method.value},
         )
 
         return saved_attendance
 
-    async def list_attendance(self, organization_id: str, actor_id: str, event_id: str) -> Sequence[EventAttendance]:
-        await self.auth_service.ensure_permission(actor_id, organization_id, "event.attendance.manage")
+    async def list_attendance(
+        self, organization_id: str, actor_id: str, event_id: str
+    ) -> Sequence[EventAttendance]:
+        await self.auth_service.ensure_permission(
+            actor_id, organization_id, "event.attendance.manage"
+        )
         await self.get_event(organization_id, event_id)
         return await self.attendance_repo.list_for_event(event_id)

@@ -20,8 +20,11 @@ from app.modules.workflow.schemas.workflow_schemas import (
 
 router = APIRouter()
 
+
 # Definitions
-@router.post("/definitions", response_model=WorkflowDefinitionResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/definitions", response_model=WorkflowDefinitionResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_workflow_definition(
     organization_id: str,
     payload: WorkflowDefinitionCreate,
@@ -35,6 +38,7 @@ async def create_workflow_definition(
         description=payload.description,
     )
 
+
 @router.get("/definitions", response_model=list[WorkflowDefinitionResponse])
 async def list_workflow_definitions(
     organization_id: str,
@@ -42,6 +46,7 @@ async def list_workflow_definitions(
     service: WorkflowService = Depends(get_workflow_service),
 ):
     return await service.list_definitions(organization_id)
+
 
 @router.get("/definitions/{definition_id}", response_model=WorkflowDefinitionResponse)
 async def get_workflow_definition(
@@ -51,6 +56,7 @@ async def get_workflow_definition(
     service: WorkflowService = Depends(get_workflow_service),
 ):
     return await service.get_definition(organization_id, definition_id)
+
 
 @router.post("/definitions/{definition_id}/publish", response_model=WorkflowDefinitionResponse)
 async def publish_workflow_definition(
@@ -63,7 +69,11 @@ async def publish_workflow_definition(
 
 
 # States
-@router.post("/definitions/{definition_id}/states", response_model=WorkflowStateResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/definitions/{definition_id}/states",
+    response_model=WorkflowStateResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def add_workflow_state(
     organization_id: str,
     definition_id: str,
@@ -79,6 +89,7 @@ async def add_workflow_state(
         type=payload.type,
     )
 
+
 @router.get("/definitions/{definition_id}/states", response_model=list[WorkflowStateResponse])
 async def list_workflow_states(
     organization_id: str,
@@ -90,7 +101,11 @@ async def list_workflow_states(
 
 
 # Transitions
-@router.post("/definitions/{definition_id}/transitions", response_model=WorkflowTransitionResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/definitions/{definition_id}/transitions",
+    response_model=WorkflowTransitionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def add_workflow_transition(
     organization_id: str,
     definition_id: str,
@@ -107,7 +122,10 @@ async def add_workflow_transition(
         required_permission=payload.required_permission,
     )
 
-@router.get("/definitions/{definition_id}/transitions", response_model=list[WorkflowTransitionResponse])
+
+@router.get(
+    "/definitions/{definition_id}/transitions", response_model=list[WorkflowTransitionResponse]
+)
 async def list_workflow_transitions(
     organization_id: str,
     definition_id: str,
@@ -118,7 +136,9 @@ async def list_workflow_transitions(
 
 
 # Instances
-@router.post("/instances", response_model=WorkflowInstanceResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/instances", response_model=WorkflowInstanceResponse, status_code=status.HTTP_201_CREATED
+)
 async def start_workflow_instance(
     organization_id: str,
     payload: WorkflowInstanceStart,
@@ -133,6 +153,7 @@ async def start_workflow_instance(
         resource_id=payload.resource_id,
     )
 
+
 @router.get("/instances/{instance_id}", response_model=WorkflowInstanceResponse)
 async def get_workflow_instance(
     organization_id: str,
@@ -141,6 +162,7 @@ async def get_workflow_instance(
     service: WorkflowService = Depends(get_workflow_service),
 ):
     return await service.get_instance(organization_id, instance_id)
+
 
 @router.post("/instances/{instance_id}/execute", response_model=WorkflowInstanceResponse)
 async def execute_workflow_transition(
@@ -158,6 +180,7 @@ async def execute_workflow_transition(
         metadata=payload.metadata,
     )
 
+
 @router.get("/instances/{instance_id}/history", response_model=list[WorkflowExecutionResponse])
 async def get_workflow_execution_history(
     organization_id: str,
@@ -169,7 +192,11 @@ async def get_workflow_execution_history(
 
 
 # Tasks
-@router.post("/instances/{instance_id}/tasks", response_model=WorkflowTaskResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/instances/{instance_id}/tasks",
+    response_model=WorkflowTaskResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_workflow_task(
     organization_id: str,
     instance_id: str,
@@ -187,6 +214,7 @@ async def create_workflow_task(
         due_at=payload.due_at,
     )
 
+
 @router.get("/instances/{instance_id}/tasks", response_model=list[WorkflowTaskResponse])
 async def list_workflow_tasks(
     organization_id: str,
@@ -196,7 +224,10 @@ async def list_workflow_tasks(
 ):
     return await service.list_tasks(organization_id, instance_id)
 
-@router.post("/instances/{instance_id}/tasks/{task_id}/complete", response_model=WorkflowTaskResponse)
+
+@router.post(
+    "/instances/{instance_id}/tasks/{task_id}/complete", response_model=WorkflowTaskResponse
+)
 async def complete_workflow_task(
     organization_id: str,
     instance_id: str,
