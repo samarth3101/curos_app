@@ -8,8 +8,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "type-check": "tsc --noEmit",
-    "lint": "eslint src/"
+    "type-check": "tsc --noEmit"
   },
   "peerDependencies": {
     "react": "^19.0.0",
