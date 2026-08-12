@@ -1,7 +1,7 @@
 """Repositories for the Organization module."""
 
-from typing import TYPE_CHECKING
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 from sqlalchemy import select
 

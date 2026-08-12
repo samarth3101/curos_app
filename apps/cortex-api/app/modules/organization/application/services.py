@@ -1,9 +1,11 @@
 """Application services for the Organization module."""
 
-from typing import Sequence
 import re
+from collections.abc import Sequence
 
 from app.core.exceptions import ForbiddenError, NotFoundError, ValidationDomainError
+from app.modules.audit.application.services import AuditService
+from app.modules.authorization.application.services import AuthorizationService
 from app.modules.organization.domain.entities import (
     Campus,
     Department,
@@ -17,8 +19,6 @@ from app.modules.organization.infrastructure.repositories import (
     OrganizationMembershipRepository,
     OrganizationRepository,
 )
-from app.modules.authorization.application.services import AuthorizationService
-from app.modules.audit.application.services import AuditService
 from app.shared.types import new_id
 
 
@@ -51,7 +51,7 @@ class OrganizationService:
         """Create a new organization and make the creating user a member with ADMIN role."""
         if not slug:
             slug = self._generate_slug(name)
-            
+
         existing = await self._org_repo.get_by_slug(slug)
         if existing:
             raise ValidationDomainError("Organization with this slug already exists")
@@ -103,7 +103,7 @@ class OrganizationService:
         org = await self._org_repo.get_by_id(org_id)
         if not org:
             raise NotFoundError("Organization not found")
-            
+
         return org
 
     async def update_organization(
@@ -111,7 +111,7 @@ class OrganizationService:
     ) -> Organization:
         """Update an organization."""
         org = await self.get_organization(org_id, user_id)
-        
+
         if name is not None:
             org.name = name
         if type is not None:
@@ -119,9 +119,9 @@ class OrganizationService:
                 org.type = OrganizationType(type)
             except ValueError:
                 raise ValidationDomainError("Invalid organization type")
-                
+
         saved_org = await self._org_repo.save(org)
-        
+
         if self._audit_service:
             await self._audit_service.record_action(
                 organization_id=saved_org.id,
@@ -131,7 +131,7 @@ class OrganizationService:
                 actor_id=user_id,
                 metadata={"name": saved_org.name, "type": saved_org.type.value},
             )
-            
+
         return saved_org
 
     async def create_campus(
@@ -139,10 +139,10 @@ class OrganizationService:
     ) -> Campus:
         """Create a campus within an organization."""
         await self.get_organization(org_id, user_id)  # Validate membership
-        
+
         campus = Campus(id=new_id(), organization_id=org_id, name=name, address=address)
         saved_campus = await self._campus_repo.save(campus)
-        
+
         if self._audit_service:
             await self._audit_service.record_action(
                 organization_id=org_id,
@@ -152,7 +152,7 @@ class OrganizationService:
                 actor_id=user_id,
                 metadata={"name": name},
             )
-            
+
         return saved_campus
 
     async def list_campuses(self, org_id: str, user_id: str) -> Sequence[Campus]:
@@ -165,12 +165,12 @@ class OrganizationService:
     ) -> Department:
         """Create a department within an organization."""
         await self.get_organization(org_id, user_id)  # Validate membership
-        
+
         department = Department(
             id=new_id(), organization_id=org_id, campus_id=campus_id, name=name, code=code
         )
         saved_dept = await self._dept_repo.save(department)
-        
+
         if self._audit_service:
             await self._audit_service.record_action(
                 organization_id=org_id,
@@ -180,7 +180,7 @@ class OrganizationService:
                 actor_id=user_id,
                 metadata={"name": name, "code": code},
             )
-            
+
         return saved_dept
 
     async def list_departments(self, org_id: str, user_id: str) -> Sequence[Department]:

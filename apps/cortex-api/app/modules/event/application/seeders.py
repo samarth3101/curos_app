@@ -1,5 +1,6 @@
 from app.modules.workflow.application.services import WorkflowService
 
+
 async def seed_event_workflow(organization_id: str, actor_id: str, workflow_service: WorkflowService) -> str:
     """
     Seeds a default 'Event Lifecycle' workflow for an organization if it doesn't exist.
@@ -7,10 +8,10 @@ async def seed_event_workflow(organization_id: str, actor_id: str, workflow_serv
     """
     definitions = await workflow_service.list_definitions(organization_id)
     event_workflow = next((d for d in definitions if d.name == "Event Lifecycle"), None)
-    
+
     if event_workflow:
         return event_workflow.id
-        
+
     # Create Definition
     definition = await workflow_service.create_definition(
         organization_id=organization_id,
@@ -19,7 +20,7 @@ async def seed_event_workflow(organization_id: str, actor_id: str, workflow_serv
         description="Standard lifecycle for events"
     )
     def_id = definition.id
-    
+
     from app.modules.workflow.domain.entities import WorkflowStateType
     # Add States
     state_draft = await workflow_service.add_state(organization_id, def_id, "Draft", "draft", WorkflowStateType.INITIAL)
@@ -37,7 +38,7 @@ async def seed_event_workflow(organization_id: str, actor_id: str, workflow_serv
     await workflow_service.add_transition(organization_id, def_id, state_approved.id, state_published.id, "publish", "event.publish")
     await workflow_service.add_transition(organization_id, def_id, state_published.id, state_ongoing.id, "start", "event.manage")
     await workflow_service.add_transition(organization_id, def_id, state_ongoing.id, state_completed.id, "complete", "event.manage")
-    
+
     # Any state to archived
     await workflow_service.add_transition(organization_id, def_id, state_draft.id, state_archived.id, "archive", "event.manage")
     await workflow_service.add_transition(organization_id, def_id, state_published.id, state_archived.id, "archive", "event.manage")

@@ -45,11 +45,11 @@ async def login(data: LoginRequest, auth_service: AuthServiceDep) -> TokenRespon
     user = await auth_service.login(data)
     access_token = IdentityService.create_access_token(user.id)
     refresh_token = IdentityService.create_refresh_token(user.id)
-    
+
     return TokenResponse(
         access_token=access_token,
         refresh_token=refresh_token,
-        # Default in config is 15 minutes, but let's just return a placeholder or 
+        # Default in config is 15 minutes, but let's just return a placeholder or
         # actual config value. We'll return 900 (15 min) for now.
         expires_in=900,
     )
@@ -63,10 +63,10 @@ async def login(data: LoginRequest, auth_service: AuthServiceDep) -> TokenRespon
 async def refresh_token(data: RefreshRequest) -> TokenResponse:
     """Get a new access token using a refresh token."""
     user_id = await IdentityService.verify_refresh_token(data.refresh_token)
-    
+
     access_token = IdentityService.create_access_token(user_id)
     new_refresh_token = IdentityService.create_refresh_token(user_id)
-    
+
     return TokenResponse(
         access_token=access_token,
         refresh_token=new_refresh_token,
@@ -84,7 +84,7 @@ async def get_current_user(user_id: CurrentUserIdDep, user_repo: UserRepoDep) ->
     user = await user_repo.get_by_id(user_id)
     if not user:
         raise UnauthorizedError("User no longer exists")
-        
+
     return UserResponse(
         id=user.id,
         email=user.email,

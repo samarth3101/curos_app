@@ -2,7 +2,13 @@
 
 from collections.abc import Sequence
 
-from app.modules.authorization.domain.entities import MembershipRole, Role, RolePermission, Permission
+from app.core.exceptions import ForbiddenError, ValidationDomainError
+from app.modules.authorization.domain.entities import (
+    MembershipRole,
+    Permission,
+    Role,
+    RolePermission,
+)
 from app.modules.authorization.infrastructure.repositories import (
     MembershipRoleRepository,
     PermissionRepository,
@@ -10,7 +16,6 @@ from app.modules.authorization.infrastructure.repositories import (
     RoleRepository,
 )
 from app.modules.organization.infrastructure.repositories import OrganizationMembershipRepository
-from app.core.exceptions import NotFoundError, ForbiddenError, ValidationDomainError
 from app.shared.types import new_id
 
 
@@ -44,7 +49,7 @@ class AuthorizationService:
             description=description,
         )
         saved_role = await self.role_repo.save(role)
-        
+
         if self.audit_service:
             await self.audit_service.record_action(
                 organization_id=organization_id,
@@ -53,7 +58,7 @@ class AuthorizationService:
                 resource_id=saved_role.id,
                 metadata={"name": name, "description": description},
             )
-            
+
         return saved_role
 
     async def assign_role_to_membership(self, membership_id: str, role_id: str) -> None:
@@ -66,9 +71,9 @@ class AuthorizationService:
             role_id=role_id,
         )
         await self.membership_role_repo.save(mr)
-        
+
         if self.audit_service:
-            # Try to fetch membership to get organization_id. 
+            # Try to fetch membership to get organization_id.
             # In a real app we might pass it or look it up efficiently.
             # For now we'll do a basic lookup or rely on it being tracked if we have org_id
             pass
@@ -115,15 +120,15 @@ class AuthorizationService:
 
         # Admin gets everything
         for p in [
-            "organization.read", "organization.update", 
-            "member.read", "member.manage", 
+            "organization.read", "organization.update",
+            "member.read", "member.manage",
             "role.read", "role.manage",
             "event.create", "event.read", "event.update", "event.delete",
             "event.submit", "event.approve", "event.publish", "event.manage",
             "event.registration.read", "event.attendance.manage"
         ]:
             await self.grant_permission_to_role(admin_role.id, p)
-            
+
         # Member gets read and some actions
         for p in [
             "organization.read", "member.read",
@@ -160,7 +165,7 @@ class AuthorizationService:
             permissions = await self.role_permission_repo.list_permissions_for_role(role.id)
             if any(p.key == permission_key for p in permissions):
                 return True
-                
+
         raise ForbiddenError(f"User lacks required permission: {permission_key}")
 
     async def ensure_permission(self, user_id: str, organization_id: str, permission_key: str) -> None:

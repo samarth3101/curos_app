@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.core.dependencies import get_current_user_id
 from app.modules.audit.api.dependencies import AuditServiceDep, AuthServiceDep
-from app.modules.audit.schemas.audit_schemas import PaginatedAuditResponse, AuditRecordResponse
+from app.modules.audit.schemas.audit_schemas import PaginatedAuditResponse
 
 router = APIRouter(prefix="/organizations/{organization_id}/audit", tags=["Audit"])
 
@@ -44,7 +44,7 @@ async def get_audit_logs(
         skip=skip,
         limit=limit,
     )
-    
+
     return {
         "items": items,
         "total": total,

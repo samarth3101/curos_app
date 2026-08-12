@@ -15,38 +15,11 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+# Import all models here so Alembic can discover them
 # Import all models so Alembic can detect them for autogenerate.
 # Add new model imports here as modules are created.
 from app.shared.base_model import Base
 
-# Import all models here so Alembic can discover them
-from app.modules.identity.infrastructure.models.user_model import UserModel
-from app.modules.organization.infrastructure.models import (
-    CampusModel,
-    DepartmentModel,
-    OrganizationMembershipModel,
-    OrganizationModel,
-)
-from app.modules.authorization.infrastructure.models import (
-    RoleModel,
-    PermissionModel,
-    RolePermissionModel,
-    MembershipRoleModel,
-)
-from app.modules.audit.infrastructure.models import AuditModel
-from app.modules.workflow.infrastructure.models import (
-    WorkflowDefinitionModel,
-    WorkflowStateModel,
-    WorkflowTransitionModel,
-    WorkflowInstanceModel,
-    WorkflowTaskModel,
-    WorkflowExecutionModel,
-)
-from app.modules.event.infrastructure.models import (
-    EventModel,
-    EventRegistrationModel,
-    EventAttendanceModel,
-)
 # from app.modules.organization.infrastructure.models import org_model
 
 if TYPE_CHECKING:

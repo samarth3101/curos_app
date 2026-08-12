@@ -1,10 +1,15 @@
-from typing import Sequence
+from collections.abc import Sequence
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.event.domain.entities import Event, EventRegistration, EventAttendance
-from app.modules.event.infrastructure.models import EventModel, EventRegistrationModel, EventAttendanceModel
-from app.core.exceptions import NotFoundError, ValidationDomainError
+from app.modules.event.domain.entities import Event, EventAttendance, EventRegistration
+from app.modules.event.infrastructure.models import (
+    EventAttendanceModel,
+    EventModel,
+    EventRegistrationModel,
+)
+
 
 class EventRepository:
     def __init__(self, session: AsyncSession) -> None:
@@ -118,7 +123,7 @@ class EventRegistrationRepository:
         merged = await self.session.merge(model)
         await self.session.flush()
         return self._to_entity(merged)
-        
+
     async def list_for_event(self, event_id: str) -> Sequence[EventRegistration]:
         stmt = select(EventRegistrationModel).where(EventRegistrationModel.event_id == event_id)
         result = await self.session.execute(stmt)
@@ -140,7 +145,7 @@ class EventAttendanceRepository:
             created_at=model.created_at,
             updated_at=model.updated_at
         )
-        
+
     def _to_model(self, entity: EventAttendance) -> EventAttendanceModel:
         return EventAttendanceModel(
             id=entity.id,
@@ -150,19 +155,19 @@ class EventAttendanceRepository:
             checked_in_at=entity.checked_in_at,
             method=entity.method
         )
-        
+
     async def get_by_registration(self, registration_id: str) -> EventAttendance | None:
         stmt = select(EventAttendanceModel).where(EventAttendanceModel.registration_id == registration_id)
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
-        
+
     async def save(self, entity: EventAttendance) -> EventAttendance:
         model = self._to_model(entity)
         merged = await self.session.merge(model)
         await self.session.flush()
         return self._to_entity(merged)
-        
+
     async def list_for_event(self, event_id: str) -> Sequence[EventAttendance]:
         stmt = select(EventAttendanceModel).where(EventAttendanceModel.event_id == event_id)
         result = await self.session.execute(stmt)

@@ -1,9 +1,10 @@
 """Integration tests for RBAC API."""
 
+from collections.abc import Generator
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
-from collections.abc import Generator
 
 from app.core.dependencies import get_current_user_id
 from app.modules.authorization.application.services import AuthorizationService
@@ -13,13 +14,13 @@ from app.modules.authorization.infrastructure.repositories import (
     RolePermissionRepository,
     RoleRepository,
 )
-from app.modules.organization.infrastructure.repositories import OrganizationMembershipRepository
 from app.modules.identity.domain.entities.user import User, UserRole, UserStatus
 from app.modules.identity.infrastructure.repositories.user_repository import UserRepository
 from app.modules.organization.application.services import OrganizationService
 from app.modules.organization.infrastructure.repositories import (
     CampusRepository,
     DepartmentRepository,
+    OrganizationMembershipRepository,
     OrganizationRepository,
 )
 from app.shared.types import new_id
@@ -44,7 +45,7 @@ async def rbac_auth_user(db_session: AsyncSession) -> User:
 
 
 @pytest.fixture
-def rbac_client_mocked(client: AsyncClient, rbac_auth_user: User) -> Generator[AsyncClient, None, None]:
+def rbac_client_mocked(client: AsyncClient, rbac_auth_user: User) -> Generator[AsyncClient]:
     from app.main import app
     app.dependency_overrides[get_current_user_id] = lambda: rbac_auth_user.id
     yield client
@@ -114,11 +115,11 @@ async def test_unauthorized_action(client: AsyncClient, db_session: AsyncSession
 
     from app.main import app
     app.dependency_overrides[get_current_user_id] = lambda: other_user.id
-    
+
     # Try to read roles (should fail, not a member)
     response = await client.get(f"/api/v1/organizations/{rbac_test_org}/roles")
     assert response.status_code == 403
-    
+
     app.dependency_overrides.pop(get_current_user_id, None)
 
 

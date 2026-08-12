@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
+
 def _now() -> datetime:
     return datetime.now(UTC)
 

@@ -18,7 +18,7 @@ from app.core.logging import get_logger
 from app.modules.identity.domain.entities.user import User, UserRole, UserStatus
 from app.modules.identity.infrastructure.repositories.user_repository import UserRepository
 from app.modules.identity.schemas.auth_schemas import LoginRequest, RegisterRequest
-from app.shared.types import TenantID, new_id
+from app.shared.types import new_id
 
 logger = get_logger(__name__)
 
@@ -148,7 +148,7 @@ class AuthenticationService:
         )
 
         saved_user = await self._user_repo.save(user)
-        
+
         if self.audit_service:
             await self.audit_service.record_action(
                 action="user.registered",
@@ -157,7 +157,7 @@ class AuthenticationService:
                 actor_id=saved_user.id,
                 metadata={"email": saved_user.email},
             )
-            
+
         return saved_user
 
     async def login(self, data: LoginRequest) -> User:
@@ -174,7 +174,7 @@ class AuthenticationService:
 
         user.record_login()
         saved_user = await self._user_repo.save(user)
-        
+
         if self.audit_service:
             await self.audit_service.record_action(
                 action="user.login",
@@ -183,5 +183,5 @@ class AuthenticationService:
                 actor_id=saved_user.id,
                 metadata={"email": saved_user.email},
             )
-            
+
         return saved_user

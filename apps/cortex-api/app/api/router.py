@@ -5,14 +5,14 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from app.api.v1.health import router as health_router
+from app.modules.audit.api.router import router as audit_router
+from app.modules.authorization.api.router import router as authorization_router
+from app.modules.event.api.router import router as event_router
 
 # Module routers will be imported here as modules are implemented:
 from app.modules.identity.api.router import router as identity_router
 from app.modules.organization.api.router import router as organization_router
-from app.modules.authorization.api.router import router as authorization_router
-from app.modules.audit.api.router import router as audit_router
 from app.modules.workflow.api.router import router as workflow_router
-from app.modules.event.api.router import router as event_router
 
 api_router = APIRouter(prefix="/api/v1")
 

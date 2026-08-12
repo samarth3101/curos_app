@@ -1,7 +1,7 @@
 """Database models for the Authorization module."""
 
 from sqlalchemy import ForeignKey, String, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.shared.base_model import Base
 

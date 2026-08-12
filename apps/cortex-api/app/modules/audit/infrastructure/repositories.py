@@ -2,7 +2,7 @@
 
 from collections.abc import Sequence
 from datetime import datetime
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING
 
 from sqlalchemy import func, select
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 class AuditRepository:
     """Repository for AuditRecord.
-    
+
     Provides append-only persistence. There are NO update or delete methods.
     """
 
@@ -70,7 +70,7 @@ class AuditRepository:
         end_date: datetime | None = None,
         skip: int = 0,
         limit: int = 50,
-    ) -> Tuple[Sequence[AuditRecord], int]:
+    ) -> tuple[Sequence[AuditRecord], int]:
         """List audit records for an organization with optional filtering and pagination."""
         stmt = select(AuditModel).where(AuditModel.organization_id == organization_id)
         count_stmt = select(func.count()).select_from(AuditModel).where(AuditModel.organization_id == organization_id)

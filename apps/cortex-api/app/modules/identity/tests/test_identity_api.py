@@ -41,7 +41,7 @@ async def test_register(client: AsyncClient, db_session: AsyncSession) -> None:
     data = response.json()
     assert data["email"] == "newuser@example.com"
     assert data["first_name"] == "New"
-    
+
     # Verify in DB
     repo = UserRepository(db_session)
     db_user = await repo.get_by_email("newuser@example.com")
@@ -86,7 +86,7 @@ async def test_get_me(client: AsyncClient, test_user: User) -> None:
         },
     )
     token = login_resp.json()["access_token"]
-    
+
     # Get profile
     response = await client.get(
         "/api/v1/auth/me",

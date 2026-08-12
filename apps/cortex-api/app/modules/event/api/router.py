@@ -3,12 +3,16 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, status
 
 from app.core.dependencies import get_current_user_id
-from app.modules.event.schemas.event_schemas import (
-    EventCreate, EventUpdate, EventResponse, 
-    EventRegistrationResponse, EventAttendanceCreate, EventAttendanceResponse
-)
-from app.modules.event.application.services import EventService
 from app.modules.event.api.dependencies import get_event_service
+from app.modules.event.application.services import EventService
+from app.modules.event.schemas.event_schemas import (
+    EventAttendanceCreate,
+    EventAttendanceResponse,
+    EventCreate,
+    EventRegistrationResponse,
+    EventResponse,
+    EventUpdate,
+)
 
 router = APIRouter(prefix="/organizations/{organization_id}/events", tags=["events"])
 

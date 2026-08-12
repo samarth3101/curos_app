@@ -2,13 +2,11 @@
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.identity.domain.entities.user import User, UserRole, UserStatus
 from app.modules.identity.infrastructure.repositories.user_repository import UserRepository
 from app.shared.types import new_id
-
-
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.fixture
@@ -36,9 +34,9 @@ async def auth_headers(auth_user: User, auth_client: AsyncClient) -> dict[str, s
     # let's login to get one if needed, or bypass auth by setting up auth_client
     # to authenticate as `auth_user`. Assuming `auth_client` is configured to log in
     # or the test can call the login endpoint.
-    
+
     # But for a simpler test, we can just call the /auth/login endpoint
-    response = await auth_client.post(
+    await auth_client.post(
         "/api/v1/auth/login",
         json={"email": auth_user.email, "password": "password123!"}
     )
@@ -47,13 +45,13 @@ async def auth_headers(auth_user: User, auth_client: AsyncClient) -> dict[str, s
 
 
 # Wait, to make this easier, we can mock the dependency `get_current_user_id`
-from app.core.dependencies import get_current_user_id
-from app.main import create_app
-
 from collections.abc import Generator
 
+from app.core.dependencies import get_current_user_id
+
+
 @pytest.fixture
-def auth_client_mocked(client: AsyncClient, auth_user: User) -> Generator[AsyncClient, None, None]:
+def auth_client_mocked(client: AsyncClient, auth_user: User) -> Generator[AsyncClient]:
     from app.main import app
     app.dependency_overrides[get_current_user_id] = lambda: auth_user.id
     yield client
@@ -119,7 +117,7 @@ async def test_create_and_list_campuses(auth_client_mocked: AsyncClient) -> None
     assert campus_resp.status_code == 201
     campus_data = campus_resp.json()
     assert campus_data["name"] == "Main Campus"
-    
+
     list_resp = await auth_client_mocked.get(f"/api/v1/organizations/{org_id}/campuses")
     assert list_resp.status_code == 200
     assert len(list_resp.json()) == 1
@@ -141,7 +139,7 @@ async def test_create_and_list_departments(auth_client_mocked: AsyncClient) -> N
     dept_data = dept_resp.json()
     assert dept_data["name"] == "Engineering"
     assert dept_data["code"] == "ENG"
-    
+
     list_resp = await auth_client_mocked.get(f"/api/v1/organizations/{org_id}/departments")
     assert list_resp.status_code == 200
     assert len(list_resp.json()) == 1

@@ -2,7 +2,7 @@
 
 from collections.abc import Sequence
 from datetime import datetime
-from typing import Any, Tuple
+from typing import Any
 
 from app.modules.audit.domain.entities import ActorType, AuditRecord
 from app.modules.audit.infrastructure.repositories import AuditRepository
@@ -54,7 +54,7 @@ class AuditService:
         end_date: datetime | None = None,
         skip: int = 0,
         limit: int = 50,
-    ) -> Tuple[Sequence[AuditRecord], int]:
+    ) -> tuple[Sequence[AuditRecord], int]:
         """
         Fetch audit logs for an organization.
         Authorization MUST be performed by the caller (API layer) using AuthorizationService.

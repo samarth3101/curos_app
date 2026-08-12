@@ -1,14 +1,15 @@
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Enum as SQLEnum, text
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, text
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
-from app.shared.base_model import Base
 from app.modules.workflow.domain.entities import (
     WorkflowDefinitionStatus,
-    WorkflowStateType,
     WorkflowInstanceStatus,
+    WorkflowStateType,
     WorkflowTaskStatus,
 )
+from app.shared.base_model import Base
 
 
 class WorkflowDefinitionModel(Base):
@@ -20,7 +21,7 @@ class WorkflowDefinitionModel(Base):
     description = Column(String(1000), nullable=True)
     version = Column(Integer, nullable=False, default=1)
     status = Column(SQLEnum(WorkflowDefinitionStatus), nullable=False, default=WorkflowDefinitionStatus.DRAFT)
-    
+
     states = relationship("WorkflowStateModel", back_populates="definition", cascade="all, delete-orphan", passive_deletes=True)
     transitions = relationship("WorkflowTransitionModel", back_populates="definition", cascade="all, delete-orphan", passive_deletes=True)
     instances = relationship("WorkflowInstanceModel", back_populates="definition")
@@ -34,7 +35,7 @@ class WorkflowStateModel(Base):
     name = Column(String(255), nullable=False)
     key = Column(String(100), nullable=False)
     type = Column(SQLEnum(WorkflowStateType), nullable=False, default=WorkflowStateType.NORMAL)
-    
+
     definition = relationship("WorkflowDefinitionModel", back_populates="states")
 
 

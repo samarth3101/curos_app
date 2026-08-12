@@ -17,14 +17,14 @@ class AuditModel(Base):
     organization_id = Column(String(36), index=True, nullable=True)
     actor_id = Column(String(36), index=True, nullable=True)
     actor_type = Column(String(50), nullable=False)
-    
+
     action = Column(String(255), index=True, nullable=False)
     resource_type = Column(String(100), index=True, nullable=False)
     resource_id = Column(String(36), index=True, nullable=False)
-    
+
     timestamp = Column(DateTime(timezone=True), index=True, nullable=False)
-    
+
     metadata_ = Column("metadata", JSONB, nullable=False, default=dict)
-    
+
     ip_address = Column(String(45), nullable=True)
     user_agent = Column(String(500), nullable=True)

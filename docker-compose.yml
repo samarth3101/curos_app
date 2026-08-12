@@ -72,8 +72,8 @@ services:
   # ============================================================
   cortex-web:
     build:
-      context: ./apps/cortex-web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/cortex-web/Dockerfile
       target: development
     container_name: cortex_web
     restart: unless-stopped

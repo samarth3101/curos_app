@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
+
 def _now() -> datetime:
     return datetime.now(UTC)
 

@@ -1,22 +1,21 @@
-from typing import Annotated
 from fastapi import APIRouter, Depends, status
 
 from app.core.dependencies import CurrentUserIdDep
 from app.modules.workflow.api.dependencies import get_workflow_service
 from app.modules.workflow.application.services import WorkflowService
 from app.modules.workflow.schemas.workflow_schemas import (
+    ExecuteTransitionRequest,
     WorkflowDefinitionCreate,
     WorkflowDefinitionResponse,
+    WorkflowExecutionResponse,
+    WorkflowInstanceResponse,
+    WorkflowInstanceStart,
     WorkflowStateCreate,
     WorkflowStateResponse,
-    WorkflowTransitionCreate,
-    WorkflowTransitionResponse,
-    WorkflowInstanceStart,
-    WorkflowInstanceResponse,
-    ExecuteTransitionRequest,
     WorkflowTaskCreate,
     WorkflowTaskResponse,
-    WorkflowExecutionResponse,
+    WorkflowTransitionCreate,
+    WorkflowTransitionResponse,
 )
 
 router = APIRouter()

@@ -1,26 +1,25 @@
+import uuid
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import FastAPI
-import uuid
 
-from app.modules.authorization.application.services import AuthorizationService
 from app.modules.workflow.api.dependencies import get_workflow_service
 from app.modules.workflow.application.services import WorkflowService
 from app.modules.workflow.infrastructure.repositories import (
     WorkflowDefinitionRepository,
-    WorkflowStateRepository,
-    WorkflowTransitionRepository,
-    WorkflowInstanceRepository,
-    WorkflowTaskRepository,
     WorkflowExecutionRepository,
+    WorkflowInstanceRepository,
+    WorkflowStateRepository,
+    WorkflowTaskRepository,
+    WorkflowTransitionRepository,
 )
 
 
 class MockAuthService:
     def __init__(self):
         pass
-        
+
     async def ensure_permission(self, user_id: str, organization_id: str, permission_key: str) -> None:
         pass
 
@@ -30,14 +29,15 @@ class MockAuditService:
         pass
 
 
-from app.main import app
 from app.core.dependencies import get_current_user_id
+from app.main import app
+
 
 @pytest.fixture
 def override_workflow_service(db_session: AsyncSession):
     auth_service = MockAuthService()
     audit_service = MockAuditService()
-    
+
     workflow_service = WorkflowService(
         definition_repo=WorkflowDefinitionRepository(db_session),
         state_repo=WorkflowStateRepository(db_session),
@@ -48,7 +48,7 @@ def override_workflow_service(db_session: AsyncSession):
         auth_service=auth_service,
         audit_service=audit_service,
     )
-    
+
     app.dependency_overrides[get_workflow_service] = lambda: workflow_service
     app.dependency_overrides[get_current_user_id] = lambda: "test-user-id"
     yield
@@ -92,7 +92,7 @@ async def test_workflow_lifecycle(
         f"/api/v1/organizations/{org_id}/workflows/definitions/{definition_id}/states",
         json={"name": "Approved", "key": "approved", "type": "FINAL"}
     )
-    
+
     states_resp = await client.get(f"/api/v1/organizations/{org_id}/workflows/definitions/{definition_id}/states")
     states = states_resp.json()
     state_draft = next(s for s in states if s["key"] == "draft")

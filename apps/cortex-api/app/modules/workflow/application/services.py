@@ -1,30 +1,30 @@
 from datetime import UTC, datetime
 from typing import Any
 
-from app.core.exceptions import ValidationDomainError, NotFoundError, ForbiddenError
-from app.shared.types import new_id
-from app.modules.authorization.application.services import AuthorizationService
+from app.core.exceptions import ForbiddenError, NotFoundError, ValidationDomainError
 from app.modules.audit.application.services import AuditService
+from app.modules.authorization.application.services import AuthorizationService
 from app.modules.workflow.domain.entities import (
     WorkflowDefinition,
-    WorkflowState,
-    WorkflowTransition,
-    WorkflowInstance,
-    WorkflowTask,
-    WorkflowExecution,
     WorkflowDefinitionStatus,
-    WorkflowStateType,
+    WorkflowExecution,
+    WorkflowInstance,
     WorkflowInstanceStatus,
+    WorkflowState,
+    WorkflowStateType,
+    WorkflowTask,
     WorkflowTaskStatus,
+    WorkflowTransition,
 )
 from app.modules.workflow.infrastructure.repositories import (
     WorkflowDefinitionRepository,
-    WorkflowStateRepository,
-    WorkflowTransitionRepository,
-    WorkflowInstanceRepository,
-    WorkflowTaskRepository,
     WorkflowExecutionRepository,
+    WorkflowInstanceRepository,
+    WorkflowStateRepository,
+    WorkflowTaskRepository,
+    WorkflowTransitionRepository,
 )
+from app.shared.types import new_id
 
 
 class WorkflowService:
@@ -83,7 +83,7 @@ class WorkflowService:
         definition = await self.get_definition(organization_id, definition_id)
         if definition.status != WorkflowDefinitionStatus.DRAFT:
             raise ValidationDomainError("Only draft workflows can be published")
-        
+
         # Validate that it has at least one initial state
         states = await self.state_repo.list_by_definition(definition.id)
         if not any(s.type == WorkflowStateType.INITIAL for s in states):
@@ -91,7 +91,7 @@ class WorkflowService:
 
         definition.status = WorkflowDefinitionStatus.PUBLISHED
         saved = await self.definition_repo.save(definition)
-        
+
         await self.audit_service.record_action(
             organization_id=organization_id,
             actor_id=actor_id,
@@ -110,7 +110,7 @@ class WorkflowService:
         definition = await self.get_definition(organization_id, definition_id)
         if definition.status != WorkflowDefinitionStatus.DRAFT:
             raise ValidationDomainError("Cannot add states to a published workflow")
-        
+
         state = WorkflowState(
             id=new_id(),
             workflow_definition_id=definition_id,
@@ -171,7 +171,7 @@ class WorkflowService:
         initial_states = [s for s in states if s.type == WorkflowStateType.INITIAL]
         if not initial_states:
             raise ValidationDomainError("Workflow definition has no initial state")
-        
+
         initial_state = initial_states[0]
 
         instance = WorkflowInstance(
@@ -221,16 +221,16 @@ class WorkflowService:
             raise ValidationDomainError(f"Cannot transition an instance in {instance.status.value} status")
 
         transitions = await self.transition_repo.list_by_definition(instance.workflow_definition_id)
-        
+
         # Find valid transition matching the action and current state
         valid_transitions = [
-            t for t in transitions 
+            t for t in transitions
             if t.from_state_id == instance.current_state_id and t.action == action
         ]
 
         if not valid_transitions:
             raise ValidationDomainError(f"Invalid transition action '{action}' for current state")
-            
+
         transition = valid_transitions[0]
 
         # RBAC Check
@@ -245,7 +245,7 @@ class WorkflowService:
 
         # Apply transition
         instance.current_state_id = transition.to_state_id
-        
+
         # Check if completion
         if next_state.type == WorkflowStateType.FINAL:
             instance.status = WorkflowInstanceStatus.COMPLETED
@@ -271,12 +271,12 @@ class WorkflowService:
             resource_type="workflow_instance",
             resource_id=saved.id,
             metadata={
-                "action": action, 
-                "from_state": current_state.key, 
+                "action": action,
+                "from_state": current_state.key,
                 "to_state": next_state.key
             },
         )
-        
+
         if saved.status == WorkflowInstanceStatus.COMPLETED:
              await self.audit_service.record_action(
                 organization_id=organization_id,
@@ -295,12 +295,12 @@ class WorkflowService:
 
     # --- Tasks ---
     async def create_task(
-        self, organization_id: str, actor_id: str, instance_id: str, title: str, 
+        self, organization_id: str, actor_id: str, instance_id: str, title: str,
         assigned_user_id: str | None = None, assigned_role_id: str | None = None,
         due_at: datetime | None = None
     ) -> WorkflowTask:
         instance = await self.get_instance(organization_id, instance_id)
-        
+
         task = WorkflowTask(
             id=new_id(),
             workflow_instance_id=instance.id,
@@ -310,7 +310,7 @@ class WorkflowService:
             due_at=due_at,
         )
         saved = await self.task_repo.save(task)
-        
+
         await self.audit_service.record_action(
             organization_id=organization_id,
             actor_id=actor_id,
@@ -331,10 +331,10 @@ class WorkflowService:
         task = await self.task_repo.get_by_id(task_id)
         if not task or task.workflow_instance_id != instance_id:
             raise NotFoundError("Workflow task not found")
-            
+
         if task.status == WorkflowTaskStatus.COMPLETED:
             raise ValidationDomainError("Task is already completed")
-            
+
         # Optional: check if actor has role to complete if assigned to role
         # For foundation, if assigned to role, we let the RBAC at the route level handle the broader permissions,
         # but here we can enforce strictly if it's assigned to a specific user.
@@ -345,16 +345,16 @@ class WorkflowService:
             membership = await self.auth_service.membership_repo.get_membership(organization_id, actor_id)
             if not membership:
                 raise ForbiddenError("User is not a member of this organization")
-            
+
             roles = await self.auth_service.get_membership_roles(membership.id)
             if not any(r.id == task.assigned_role_id for r in roles):
                  raise ForbiddenError("User does not have the required role to complete this task")
 
         task.status = WorkflowTaskStatus.COMPLETED
         task.completed_at = datetime.now(UTC)
-        
+
         saved = await self.task_repo.save(task)
-        
+
         await self.audit_service.record_action(
             organization_id=organization_id,
             actor_id=actor_id,

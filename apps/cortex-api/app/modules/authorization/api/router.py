@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_user_id, get_session
+from app.core.exceptions import NotFoundError
 from app.modules.authorization.application.services import AuthorizationService
 from app.modules.authorization.infrastructure.repositories import (
     MembershipRoleRepository,
@@ -19,7 +20,6 @@ from app.modules.authorization.schemas.rbac_schemas import (
     RoleResponse,
 )
 from app.modules.organization.infrastructure.repositories import OrganizationMembershipRepository
-from app.core.exceptions import NotFoundError
 
 router = APIRouter(prefix="/organizations/{organization_id}", tags=["Authorization"])
 
@@ -27,7 +27,7 @@ def get_authorization_service(session: AsyncSession = Depends(get_session)) -> A
     from app.modules.audit.application.services import AuditService
     from app.modules.audit.infrastructure.repositories import AuditRepository
     audit_service = AuditService(AuditRepository(session))
-    
+
     return AuthorizationService(
         role_repo=RoleRepository(session),
         permission_repo=PermissionRepository(session),
@@ -71,7 +71,7 @@ async def assign_role(
 ):
     """Assign a role to an organization member. (Requires member.manage)"""
     await auth_service.ensure_permission(user_id, organization_id, "member.manage")
-    
+
     # Verify the target user is a member
     membership = await auth_service.membership_repo.get_membership(organization_id, member_user_id)
     if not membership:

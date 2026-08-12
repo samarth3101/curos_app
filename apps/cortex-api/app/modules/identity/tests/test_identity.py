@@ -6,7 +6,6 @@ import pytest
 
 from app.modules.identity.domain.entities.user import User, UserStatus
 from app.modules.identity.domain.value_objects.email import Email
-from app.shared.types import TenantID, new_id
 from app.shared.types import new_id
 
 
