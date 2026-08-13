@@ -12,12 +12,18 @@ async def main():
     async with factory() as session:
         repo = UserRepository(session)
         service = AuthenticationService(repo)
-        req = RegisterRequest(email="samarth@curos.com", password="testpassword123", first_name="Samarth", last_name="Patil")  # noqa: S106
+        req = RegisterRequest(
+            email="samarth@curos.com",
+            password="testpassword123",
+            first_name="Samarth",
+            last_name="Patil",
+        )  # noqa: S106
         try:
             await service.register(req)
             await session.commit()
             print("Success")
         except Exception:
             traceback.print_exc()
+
 
 asyncio.run(main())

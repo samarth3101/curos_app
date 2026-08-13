@@ -203,10 +203,14 @@ class MembershipRoleRepository:
 
     async def list_roles_for_membership(self, membership_id: str) -> Sequence[Role]:
         from app.modules.organization.infrastructure.models import OrganizationMembershipModel
+
         stmt = (
             select(RoleModel)
             .join(MembershipRoleModel, MembershipRoleModel.role_id == RoleModel.id)
-            .join(OrganizationMembershipModel, OrganizationMembershipModel.id == MembershipRoleModel.membership_id)
+            .join(
+                OrganizationMembershipModel,
+                OrganizationMembershipModel.id == MembershipRoleModel.membership_id,
+            )
             .where(
                 MembershipRoleModel.membership_id == membership_id,
                 RoleModel.status != RoleStatus.DELETED.value,

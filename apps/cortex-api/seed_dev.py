@@ -11,6 +11,7 @@ Run this to set up a fully functional test environment:
 Usage:
     python seed_dev.py
 """
+
 import asyncio
 import sys
 
@@ -78,12 +79,15 @@ async def seed():
         if user is None:
             auth_svc = AuthenticationService(user_repo=user_repo, audit_service=None)
             from app.modules.identity.schemas.identity_schemas import UserCreate
-            user = await auth_svc.register(UserCreate(
-                email=EMAIL,
-                password=PASSWORD,
-                first_name="Samarth",
-                last_name="Patil",
-            ))
+
+            user = await auth_svc.register(
+                UserCreate(
+                    email=EMAIL,
+                    password=PASSWORD,
+                    first_name="Samarth",
+                    last_name="Patil",
+                )
+            )
             print(f"✓ Created user: {EMAIL}")
         else:
             print(f"✓ Found user: {EMAIL} (id={user.id})")
