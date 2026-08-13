@@ -14,10 +14,10 @@ async def main():
         service = AuthenticationService(repo)
         req = RegisterRequest(
             email="samarth@curos.com",
-            password="testpassword123",
+            password="testpassword123",  # noqa: S106
             first_name="Samarth",
             last_name="Patil",
-        )  # noqa: S106
+        )
         try:
             await service.register(req)
             await session.commit()
