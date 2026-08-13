@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { authService } from '@/services/auth';
@@ -34,8 +35,9 @@ export default function LoginPage() {
       setAuth(tokens.access_token, tokens.refresh_token, user);
       
       router.push('/');
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Invalid email or password');
+    } catch (err) {
+      const axiosErr = err as { response?: { data?: { detail?: string } } };
+      setError(axiosErr.response?.data?.detail || 'Invalid email or password');
       useAuthStore.setState({ accessToken: null, refreshToken: null });
     } finally {
       setLoading(false);
@@ -47,7 +49,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <img src="/curos_logo.png" alt="Curos Logo" className="h-12 w-auto object-contain" />
+            <Image src="/curos_logo.png" alt="Curos Logo" width={100} height={48} className="h-12 w-auto object-contain" />
           </div>
           <CardTitle className="text-2xl font-bold tracking-tight">Cortex <span className="text-red-600">OI</span></CardTitle>
           <CardDescription>Enter your credentials to access the operational dashboard</CardDescription>

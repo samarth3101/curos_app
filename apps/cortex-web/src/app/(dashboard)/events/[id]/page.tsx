@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from 'react';
+import { useCallback, useEffect, useState, use } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useOrgStore } from '@/stores/orgStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -34,7 +34,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState('');
 
-  const fetchEventData = async () => {
+  const fetchEventData = useCallback(async () => {
     if (!orgId) return;
     try {
       setLoading(true);
@@ -51,22 +51,25 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
     } finally {
       setLoading(false);
     }
-  };
+  }, [orgId, eventId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchEventData();
-  }, [eventId, orgId]);
+  }, [fetchEventData]);
 
-  const handleAction = async (actionFn: () => Promise<any>, label: string) => {
+
+  const handleAction = async (actionFn: () => Promise<unknown>, label: string) => {
     setActionLoading(true);
     setActionError('');
     try {
       await actionFn();
       await fetchEventData();
-    } catch (error: any) {
-      const msg = error.response?.data?.detail || error.response?.data?.error?.message || `${label} failed`;
+    } catch (error) {
+      const axiosErr = error as { response?: { data?: { detail?: string; error?: { message?: string } } } };
+      const msg = axiosErr.response?.data?.detail || axiosErr.response?.data?.error?.message || `${label} failed`;
       setActionError(msg);
-      console.error(`${label} failed:`, error.response?.data || error);
+      console.error(`${label} failed:`, axiosErr.response?.data || error);
     } finally {
       setActionLoading(false);
     }

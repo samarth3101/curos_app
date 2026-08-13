@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useOrgStore } from '@/stores/orgStore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle2, Circle } from 'lucide-react';
-import { organizationsService } from '@/services/organizations';
 import { eventsService } from '@/services/events';
 import { usersService } from '@/services/users';
 import { rolesService } from '@/services/roles';

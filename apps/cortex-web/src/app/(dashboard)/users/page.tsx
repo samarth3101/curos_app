@@ -56,8 +56,9 @@ export default function UsersPage() {
       setIsAssignModalOpen(false);
       setSelectedUserId('');
       setSelectedRoleId('');
-    } catch (error: any) {
-      const msg = error.response?.data?.detail || error.response?.data?.error?.message || 'Failed to assign role';
+    } catch (error) {
+      const axiosError = error as { response?: { data?: { detail?: string; error?: { message?: string } } } };
+      const msg = axiosError.response?.data?.detail || axiosError.response?.data?.error?.message || 'Failed to assign role';
       setAssignError(msg);
     } finally {
       setIsSubmitting(false);

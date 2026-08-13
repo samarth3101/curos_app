@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useOrgStore } from '@/stores/orgStore';
 import { organizationsService } from '@/services/organizations';
 import type { components } from '@curos/types';
@@ -25,7 +25,7 @@ export default function OrganizationsPage() {
   const [type, setType] = useState('university');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchOrganizations = async () => {
+  const fetchOrganizations = useCallback(async () => {
     try {
       setLoading(true);
       const data = await organizationsService.list();
@@ -35,11 +35,12 @@ export default function OrganizationsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchOrganizations();
-  }, []);
+  }, [fetchOrganizations]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,9 +52,10 @@ export default function OrganizationsPage() {
       setIsCreateModalOpen(false);
       setName('');
       setSlug('');
-    } catch (error: any) {
+    } catch (error) {
+      const axiosError = error as { response?: { data?: { detail?: string; error?: { message?: string } } } };
       console.error('Failed to create organization:', error);
-      const msg = error.response?.data?.detail || error.response?.data?.error?.message || 'Failed to create organization';
+      const msg = axiosError.response?.data?.detail || axiosError.response?.data?.error?.message || 'Failed to create organization';
       alert(msg);
     } finally {
       setIsSubmitting(false);

@@ -3,6 +3,8 @@
 from fastapi import APIRouter, Depends, status
 
 from app.core.dependencies import get_current_user_id
+from app.modules.identity.api.dependencies import UserRepoDep
+from app.modules.identity.schemas.auth_schemas import UserResponse
 from app.modules.organization.api.dependencies import OrgServiceDep
 from app.modules.organization.schemas.org_schemas import (
     CampusCreate,
@@ -13,8 +15,6 @@ from app.modules.organization.schemas.org_schemas import (
     OrganizationResponse,
     OrganizationUpdate,
 )
-from app.modules.identity.api.dependencies import UserRepoDep
-from app.modules.identity.schemas.auth_schemas import UserResponse
 
 router = APIRouter(prefix="/organizations", tags=["Organizations"])
 
@@ -87,10 +87,10 @@ async def list_organization_members(
     """List all members of an organization (requires membership)."""
     # Ensure the user has access to this organization
     await org_service.get_organization(org_id, user_id)
-    
+
     # Fetch members
     members = await user_repo.get_members_by_organization(org_id)
-    
+
     return [
         UserResponse(
             id=m.id,

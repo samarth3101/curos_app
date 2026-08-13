@@ -3,7 +3,7 @@ Cortex OI - Development Seed Script
 ====================================
 Run this to set up a fully functional test environment:
   - Creates or finds user samarth@curos.com
-  - Creates or finds org "PCU"  
+  - Creates or finds org "PCU"
   - Seeds ADMIN + MEMBER + VIEWER roles with all permissions
   - Assigns ADMIN role to the user
   - Prints a status summary
@@ -14,6 +14,17 @@ Usage:
 import asyncio
 import sys
 
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import sessionmaker
+
+import app.modules.audit.infrastructure.models
+import app.modules.authorization.infrastructure.models
+import app.modules.event.infrastructure.models
+
+# Import all models to ensure tables are created
+import app.modules.identity.infrastructure.models
+import app.modules.organization.infrastructure.models
+import app.modules.workflow.infrastructure.models  # noqa: F401
 from app.infrastructure.database import get_engine
 from app.modules.authorization.application.services import AuthorizationService
 from app.modules.authorization.infrastructure.repositories import (
@@ -31,17 +42,6 @@ from app.modules.organization.infrastructure.repositories import (
     OrganizationMembershipRepository,
     OrganizationRepository,
 )
-
-# Import all models to ensure tables are created
-import app.modules.identity.infrastructure.models  # noqa: F401
-import app.modules.organization.infrastructure.models  # noqa: F401
-import app.modules.authorization.infrastructure.models  # noqa: F401
-import app.modules.audit.infrastructure.models  # noqa: F401
-import app.modules.workflow.infrastructure.models  # noqa: F401
-import app.modules.event.infrastructure.models  # noqa: F401
-
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import sessionmaker
 
 EMAIL = "samarth@curos.com"
 PASSWORD = "testpassword123"
@@ -93,7 +93,6 @@ async def seed():
         user_orgs = await membership_repo.get_user_organizations(user.id)
         org = next((o for o in user_orgs if o.slug == ORG_SLUG), None)
         if org is None:
-            from app.modules.organization.schemas.org_schemas import OrganizationCreate
             campus_repo = CampusRepository(session)
             dept_repo = DepartmentRepository(session)
             org_svc = OrganizationService(

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useOrgStore } from '@/stores/orgStore';
 import { eventsService } from '@/services/events';
@@ -32,7 +32,7 @@ export default function EventsPage() {
     capacity: 100,
   });
 
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     if (!activeOrganization) return;
     try {
       setLoading(true);
@@ -43,11 +43,12 @@ export default function EventsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeOrganization]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchEvents();
-  }, [activeOrganization]);
+  }, [fetchEvents]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,9 +67,10 @@ export default function EventsPage() {
       setEvents([...events, newEvent]);
       setIsCreateModalOpen(false);
       setFormData({ title: '', description: '', event_type: 'WORKSHOP', venue: '', start_at: '', end_at: '', capacity: 100 });
-    } catch (error: any) {
+    } catch (error) {
+      const axiosError = error as { response?: { data?: { detail?: string } } };
       console.error('Failed to create event:', error);
-      alert(error.response?.data?.detail || JSON.stringify(error.response?.data) || 'Failed to create event');
+      alert(axiosError.response?.data?.detail || 'Failed to create event');
     } finally {
       setIsSubmitting(false);
     }
@@ -125,7 +127,7 @@ export default function EventsPage() {
               </TableRow>
             ) : events.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-gray-500">No events yet. Click "Create Event" to start.</TableCell>
+                <TableCell colSpan={5} className="text-center py-8 text-gray-500">No events yet. Click &quot;Create Event&quot; to start.</TableCell>
               </TableRow>
             ) : (
               events.map((event) => (

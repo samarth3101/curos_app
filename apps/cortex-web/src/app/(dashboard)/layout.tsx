@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuthStore } from '@/stores/authStore';
 import { useOrgStore } from '@/stores/orgStore';
 import { LayoutDashboard, Building2, Users, Calendar, ShieldAlert, LogOut } from 'lucide-react';
@@ -42,7 +43,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
         <div className="h-16 flex items-center px-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <img src="/curos_logo.png" alt="Curos Logo" className="h-8 w-8 object-contain" />
+            <Image src="/curos_logo.png" alt="Curos Logo" width={32} height={32} className="h-8 w-8 object-contain" />
             <span className="text-lg font-bold text-gray-900 tracking-tight">Cortex <span className="text-red-600">OI</span></span>
           </div>
         </div>

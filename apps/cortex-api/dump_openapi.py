@@ -1,6 +1,7 @@
-import sys
 import json
+from pathlib import Path
+
 from app.main import app
 
-with open("openapi.json", "w") as f:
+with Path("openapi.json").open("w") as f:
     json.dump(app.openapi(), f, indent=2)

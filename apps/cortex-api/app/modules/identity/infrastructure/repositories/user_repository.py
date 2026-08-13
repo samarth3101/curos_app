@@ -8,8 +8,8 @@ from sqlalchemy import select
 
 from app.modules.identity.domain.entities.user import User, UserRole, UserStatus
 from app.modules.identity.infrastructure.models.user_model import UserModel
-from app.modules.organization.infrastructure.models import OrganizationMembershipModel
 from app.modules.organization.domain.entities import MembershipStatus
+from app.modules.organization.infrastructure.models import OrganizationMembershipModel
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession

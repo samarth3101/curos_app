@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useOrgStore } from '@/stores/orgStore';
-import { auditService, type AuditFilterParams } from '@/services/audit';
+import { auditService } from '@/services/audit';
 import type { components } from '@curos/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 
 type AuditResponse = components['schemas']['AuditRecordResponse'];
