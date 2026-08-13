@@ -13,6 +13,8 @@ from app.modules.organization.schemas.org_schemas import (
     OrganizationResponse,
     OrganizationUpdate,
 )
+from app.modules.identity.api.dependencies import UserRepoDep
+from app.modules.identity.schemas.auth_schemas import UserResponse
 
 router = APIRouter(prefix="/organizations", tags=["Organizations"])
 
@@ -73,6 +75,35 @@ async def get_organization(
         type=org.type.value,
         status=org.status.value,
     )
+
+
+@router.get("/{org_id}/members", response_model=list[UserResponse])
+async def list_organization_members(
+    org_id: str,
+    org_service: OrgServiceDep,
+    user_repo: UserRepoDep,
+    user_id: str = Depends(get_current_user_id),
+):
+    """List all members of an organization (requires membership)."""
+    # Ensure the user has access to this organization
+    await org_service.get_organization(org_id, user_id)
+    
+    # Fetch members
+    members = await user_repo.get_members_by_organization(org_id)
+    
+    return [
+        UserResponse(
+            id=m.id,
+            email=m.email,
+            first_name=m.first_name,
+            last_name=m.last_name,
+            role=m.role.value,
+            status=m.status.value,
+            email_verified=m.email_verified,
+            last_login_at=m.last_login_at,
+        )
+        for m in members
+    ]
 
 
 @router.put("/{org_id}", response_model=OrganizationResponse)

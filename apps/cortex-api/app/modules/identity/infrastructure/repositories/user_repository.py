@@ -8,6 +8,8 @@ from sqlalchemy import select
 
 from app.modules.identity.domain.entities.user import User, UserRole, UserStatus
 from app.modules.identity.infrastructure.models.user_model import UserModel
+from app.modules.organization.infrastructure.models import OrganizationMembershipModel
+from app.modules.organization.domain.entities import MembershipStatus
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -88,3 +90,20 @@ class UserRepository:
         """Check if user exists by ID."""
         user = await self.get_by_id(entity_id)
         return user is not None
+
+    async def get_members_by_organization(self, organization_id: str) -> list[User]:
+        """Get all users who are active members of an organization."""
+        stmt = (
+            select(UserModel)
+            .join(
+                OrganizationMembershipModel,
+                OrganizationMembershipModel.user_id == UserModel.id,
+            )
+            .where(
+                OrganizationMembershipModel.organization_id == organization_id,
+                OrganizationMembershipModel.status == MembershipStatus.ACTIVE.value,
+            )
+        )
+        result = await self._session.execute(stmt)
+        models = result.scalars().all()
+        return [self._to_entity(m) for m in models]

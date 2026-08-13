@@ -140,6 +140,8 @@ class AuthorizationService:
             "event.manage",
             "event.registration.read",
             "event.attendance.manage",
+            "audit.read",
+            "audit.manage",
         ]:
             await self.grant_permission_to_role(admin_role.id, p)
 

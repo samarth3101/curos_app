@@ -243,7 +243,7 @@ class WorkflowService:
         metadata: dict[str, Any],
     ) -> WorkflowInstance:
         instance = await self.get_instance(organization_id, instance_id)
-        if instance.status != WorkflowInstanceStatus.ACTIVE:
+        if instance.status not in (WorkflowInstanceStatus.ACTIVE, WorkflowInstanceStatus.COMPLETED):
             raise ValidationDomainError(
                 f"Cannot transition an instance in {instance.status.value} status"
             )
