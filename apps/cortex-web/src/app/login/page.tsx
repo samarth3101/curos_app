@@ -1,10 +1,14 @@
 "use client";
 
 import { useState } from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
+import { useOrgStore } from '@/stores/orgStore';
 import { authService } from '@/services/auth';
+import { organizationsService } from '@/services/organizations';
+import { normalizeApiError } from '@/lib/errors';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +20,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const setAuth = useAuthStore((state) => state.setAuth);
+  const { setOrganizations } = useOrgStore();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,19 +30,31 @@ export default function LoginPage() {
     try {
       const tokens = await authService.login({ email, password });
       
-      // Temporarily store just tokens to allow fetching me
+      // Temporarily store tokens to allow fetching /me
       useAuthStore.setState({ accessToken: tokens.access_token, refreshToken: tokens.refresh_token });
       
       // Fetch user profile
       const user = await authService.getMe();
       
-      // Save all to store properly
+      // Save all to store
       setAuth(tokens.access_token, tokens.refresh_token, user);
       
-      router.push('/');
+      // Fetch user's organizations and set them
+      try {
+        const orgs = await organizationsService.list();
+        if (orgs.length === 0) {
+          // No organizations yet — send to onboarding
+          router.push('/onboarding');
+        } else {
+          setOrganizations(orgs);
+          router.push('/');
+        }
+      } catch {
+        // If org fetch fails, still go to dashboard — they can create from there
+        router.push('/');
+      }
     } catch (err) {
-      const axiosErr = err as { response?: { data?: { detail?: string } } };
-      setError(axiosErr.response?.data?.detail || 'Invalid email or password');
+      setError(normalizeApiError(err));
       useAuthStore.setState({ accessToken: null, refreshToken: null });
     } finally {
       setLoading(false);
@@ -59,11 +76,11 @@ export default function LoginPage() {
             {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>}
             
             <div className="space-y-2">
-              <label className="text-sm font-medium leading-none" htmlFor="email">Email</label>
+              <label className="text-sm font-medium leading-none" htmlFor="login-email">Email</label>
               <Input
-                id="email"
+                id="login-email"
                 type="email"
-                placeholder="admin@curos.com"
+                placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -71,9 +88,9 @@ export default function LoginPage() {
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-medium leading-none" htmlFor="password">Password</label>
+              <label className="text-sm font-medium leading-none" htmlFor="login-password">Password</label>
               <Input
-                id="password"
+                id="login-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -84,6 +101,13 @@ export default function LoginPage() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
+
+            <p className="text-center text-sm text-gray-500">
+              Don&apos;t have an account?{' '}
+              <Link href="/signup" className="font-medium text-blue-600 hover:text-blue-500">
+                Sign up
+              </Link>
+            </p>
           </form>
         </CardContent>
       </Card>

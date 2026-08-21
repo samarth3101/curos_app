@@ -11,7 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { Calendar, MapPin, Users, Activity, CheckCircle2 } from 'lucide-react';
+import { Calendar, MapPin, Users, Activity, CheckCircle2, Share2, Copy, ExternalLink } from 'lucide-react';
+import { normalizeApiError } from '@/lib/errors';
 
 type EventResponse = components['schemas']['EventResponse'];
 type EventRegistrationResponse = components['schemas']['EventRegistrationResponse'];
@@ -33,6 +34,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState('');
+  const [copied, setCopied] = useState(false);
 
   const fetchEventData = useCallback(async () => {
     if (!orgId) return;
@@ -66,13 +68,20 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
       await actionFn();
       await fetchEventData();
     } catch (error) {
-      const axiosErr = error as { response?: { data?: { detail?: string; error?: { message?: string } } } };
-      const msg = axiosErr.response?.data?.detail || axiosErr.response?.data?.error?.message || `${label} failed`;
-      setActionError(msg);
-      console.error(`${label} failed:`, axiosErr.response?.data || error);
+      setActionError(normalizeApiError(error));
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const publicUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/p/events/${eventId}`
+    : `/p/events/${eventId}`;
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(publicUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const isRegistered = registrations.some(r => r.user_id === user?.id && r.status === 'REGISTERED');
@@ -118,11 +127,34 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
           </div>
         </div>
 
-        {/* Lifecycle Action Buttons */}
+        {/* Action Buttons */}
         <div className="flex flex-wrap gap-2">
           {actionError && (
             <div className="w-full text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-md">
               {actionError}
+            </div>
+          )}
+          {/* Share button for published/ongoing events */}
+          {(event.status === 'PUBLISHED' || event.status === 'ONGOING') && (
+            <div className="flex gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyLink}
+                className="gap-1.5"
+              >
+                {copied ? <CheckCircle2 className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                {copied ? 'Copied!' : 'Copy Link'}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(publicUrl, '_blank')}
+                className="gap-1.5"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Public Page
+              </Button>
             </div>
           )}
           {event.status === 'DRAFT' && (
@@ -292,7 +324,9 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>User ID</TableHead>
+                    <TableHead>Participant</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Type</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Registered At</TableHead>
                   </TableRow>
@@ -300,12 +334,22 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                 <TableBody>
                   {registrations.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center py-4 text-gray-500">No registrations yet.</TableCell>
+                      <TableCell colSpan={5} className="text-center py-4 text-gray-500">No registrations yet.</TableCell>
                     </TableRow>
                   ) : (
                     registrations.map(reg => (
                       <TableRow key={reg.id}>
-                        <TableCell className="font-mono text-xs text-gray-700">{reg.user_id}</TableCell>
+                        <TableCell className="font-medium text-gray-900">
+                          {reg.participant_name || (reg.user_id ? 'Member' : '—')}
+                        </TableCell>
+                        <TableCell className="text-gray-600 text-sm">
+                          {reg.participant_email || reg.user_id || '—'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">
+                            {reg.participant_id ? 'Guest' : 'Member'}
+                          </Badge>
+                        </TableCell>
                         <TableCell>
                           <Badge variant={reg.status === 'REGISTERED' ? 'success' : 'secondary'}>{reg.status}</Badge>
                         </TableCell>

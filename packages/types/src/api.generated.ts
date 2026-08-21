@@ -197,9 +197,37 @@ export interface paths {
         };
         /**
          * List Organization Members
-         * @description List all members of an organization (requires membership).
+         * @description List all members of an organization with their role assignments.
          */
         get: operations["list_organization_members_api_v1_organizations__org_id__members_get"];
+        put?: never;
+        /**
+         * Add Member
+         * @description Add an existing Cortex user to this organization by email.
+         *
+         *     - 404 if no account found for this email
+         *     - 409 if user is already a member
+         *     - Requires member.manage permission
+         */
+        post: operations["add_member_api_v1_organizations__org_id__members_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Org Stats
+         * @description Aggregate dashboard statistics for an organization.
+         */
+        get: operations["get_org_stats_api_v1_organizations__org_id__stats_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -720,6 +748,72 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/public/events/{event_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Public Event
+         * @description Get public event details — no authentication required.
+         */
+        get: operations["get_public_event_api_v1_public_events__event_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/events/{event_id}/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Register Guest
+         * @description Register as a guest participant — no authentication required.
+         *
+         *     Returns 409 if already registered with the same email.
+         *     Returns 422 if capacity reached or event is not open.
+         */
+        post: operations["register_guest_api_v1_public_events__event_id__register_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/events/{event_id}/ticket/{ticket_token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Ticket
+         * @description Retrieve ticket details by opaque token — no authentication required.
+         *
+         *     The ticket_token is a random 64-char hex string generated at registration time.
+         *     It is the only public-facing identifier — the internal registration UUID is never exposed.
+         */
+        get: operations["get_ticket_api_v1_public_events__event_id__ticket__ticket_token__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -806,7 +900,9 @@ export interface components {
         /** EventAttendanceCreate */
         EventAttendanceCreate: {
             /** User Id */
-            user_id: string;
+            user_id?: string | null;
+            /** Registration Id */
+            registration_id?: string | null;
             method: components["schemas"]["AttendanceMethod"];
         };
         /** EventAttendanceResponse */
@@ -818,7 +914,7 @@ export interface components {
             /** Registration Id */
             registration_id: string;
             /** User Id */
-            user_id: string;
+            user_id: string | null;
             /**
              * Checked In At
              * Format: date-time
@@ -859,7 +955,15 @@ export interface components {
             /** Event Id */
             event_id: string;
             /** User Id */
-            user_id: string;
+            user_id: string | null;
+            /** Participant Id */
+            participant_id: string | null;
+            /** Participant Name */
+            participant_name?: string | null;
+            /** Participant Email */
+            participant_email?: string | null;
+            /** Ticket Token */
+            ticket_token: string | null;
             status: components["schemas"]["RegistrationStatus"];
             /** Registered At */
             registered_at: string | null;
@@ -944,6 +1048,48 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /** GuestRegistrationRequest */
+        GuestRegistrationRequest: {
+            /** Full Name */
+            full_name: string;
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /** Phone */
+            phone?: string | null;
+            /** Institution */
+            institution?: string | null;
+        };
+        /**
+         * GuestRegistrationResponse
+         * @description Returned immediately after a successful guest registration.
+         */
+        GuestRegistrationResponse: {
+            /** Registration Id */
+            registration_id: string;
+            /** Ticket Token */
+            ticket_token: string;
+            /** Participant Name */
+            participant_name: string;
+            /** Participant Email */
+            participant_email: string;
+            /** Event Title */
+            event_title: string;
+            /**
+             * Event Date
+             * Format: date-time
+             */
+            event_date: string;
+            /** Event Venue */
+            event_venue: string;
+            /**
+             * Message
+             * @default Registration confirmed! Use your ticket token to access your ticket.
+             */
+            message: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -958,6 +1104,59 @@ export interface components {
             email: string;
             /** Password */
             password: string;
+        };
+        /**
+         * MemberAddRequest
+         * @description Add an existing Cortex user to this organization by email.
+         */
+        MemberAddRequest: {
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /** Role Id */
+            role_id: string;
+        };
+        /**
+         * MemberWithRolesResponse
+         * @description Member details including their role assignments.
+         */
+        MemberWithRolesResponse: {
+            /** Id */
+            id: string;
+            /** Email */
+            email: string;
+            /** First Name */
+            first_name: string | null;
+            /** Last Name */
+            last_name: string | null;
+            /** Status */
+            status: string;
+            /** Membership Id */
+            membership_id: string;
+            /** Roles */
+            roles: string[];
+            /** Joined At */
+            joined_at?: string | null;
+        };
+        /**
+         * OrgStatsResponse
+         * @description Aggregate stats for the organization dashboard.
+         */
+        OrgStatsResponse: {
+            /** Total Members */
+            total_members: number;
+            /** Total Events */
+            total_events: number;
+            /** Upcoming Events */
+            upcoming_events: number;
+            /** Pending Approvals */
+            pending_approvals: number;
+            /** Total Registrations */
+            total_registrations: number;
+            /** Total Attendance */
+            total_attendance: number;
         };
         /** OrganizationCreate */
         OrganizationCreate: {
@@ -1001,6 +1200,40 @@ export interface components {
             page: number;
             /** Size */
             size: number;
+        };
+        /**
+         * PublicEventResponse
+         * @description Public event details — no auth required, no internal IDs exposed.
+         */
+        PublicEventResponse: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /** Description */
+            description: string | null;
+            event_type: components["schemas"]["EventType"];
+            /** Venue */
+            venue: string;
+            /**
+             * Start At
+             * Format: date-time
+             */
+            start_at: string;
+            /**
+             * End At
+             * Format: date-time
+             */
+            end_at: string;
+            /** Capacity */
+            capacity: number;
+            /** Registered Count */
+            registered_count: number;
+            /** Available Seats */
+            available_seats: number;
+            status: components["schemas"]["EventStatus"];
+            /** Organization Name */
+            organization_name: string;
         };
         /** RefreshRequest */
         RefreshRequest: {
@@ -1075,6 +1308,33 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
+        };
+        /**
+         * TicketResponse
+         * @description Guest ticket — accessed via opaque ticket_token only.
+         */
+        TicketResponse: {
+            /** Ticket Token */
+            ticket_token: string;
+            /** Registration Id */
+            registration_id: string;
+            /** Participant Name */
+            participant_name: string;
+            /** Participant Email */
+            participant_email: string;
+            /** Event Title */
+            event_title: string;
+            event_type: components["schemas"]["EventType"];
+            /**
+             * Event Date
+             * Format: date-time
+             */
+            event_date: string;
+            /** Event Venue */
+            event_venue: string;
+            status: components["schemas"]["RegistrationStatus"];
+            /** Registered At */
+            registered_at: string | null;
         };
         /**
          * TokenResponse
@@ -1650,7 +1910,73 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserResponse"][];
+                    "application/json": components["schemas"]["MemberWithRolesResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_member_api_v1_organizations__org_id__members_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MemberAddRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberWithRolesResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_org_stats_api_v1_organizations__org_id__stats_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrgStatsResponse"];
                 };
             };
             /** @description Validation Error */
@@ -2947,6 +3273,104 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EventAttendanceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_public_event_api_v1_public_events__event_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEventResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    register_guest_api_v1_public_events__event_id__register_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GuestRegistrationRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuestRegistrationResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_ticket_api_v1_public_events__event_id__ticket__ticket_token__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+                ticket_token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketResponse"];
                 };
             };
             /** @description Validation Error */

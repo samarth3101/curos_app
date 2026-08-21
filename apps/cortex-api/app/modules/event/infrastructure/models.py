@@ -42,15 +42,36 @@ class EventModel(Base):
     )
 
 
+class EventParticipantModel(Base):
+    """Guest participant — does NOT require a Cortex Identity account."""
+
+    __tablename__ = "event_participants"
+
+    full_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    email: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    institution: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+
 class EventRegistrationModel(Base):
     __tablename__ = "event_registrations"
-    __table_args__ = (UniqueConstraint("event_id", "user_id", name="uix_event_user_registration"),)
 
     event_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("events.id", ondelete="CASCADE"), index=True, nullable=False
     )
-    user_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("identity_users.id", ondelete="CASCADE"), index=True, nullable=False
+    # Either user_id (authenticated) OR participant_id (guest) — enforced at service layer.
+    user_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("identity_users.id", ondelete="CASCADE"), index=True, nullable=True
+    )
+    participant_id: Mapped[str | None] = mapped_column(
+        String(36),
+        ForeignKey("event_participants.id", ondelete="SET NULL"),
+        index=True,
+        nullable=True,
+    )
+    # Opaque random token — the only public-facing identifier for ticket access.
+    ticket_token: Mapped[str | None] = mapped_column(
+        String(64), nullable=True, unique=True, index=True
     )
 
     status: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -71,8 +92,8 @@ class EventAttendanceModel(Base):
         index=True,
         nullable=False,
     )
-    user_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("identity_users.id", ondelete="CASCADE"), index=True, nullable=False
+    user_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("identity_users.id", ondelete="CASCADE"), index=True, nullable=True
     )
 
     checked_in_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

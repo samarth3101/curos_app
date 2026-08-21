@@ -48,3 +48,6 @@ def get_organization_service(session: AsyncSession = Depends(get_session)) -> Or
 
 
 OrgServiceDep = Annotated[OrganizationService, Depends(get_organization_service)]
+
+# Alias used by router.py
+get_org_service = get_organization_service

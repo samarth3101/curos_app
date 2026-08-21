@@ -1,6 +1,8 @@
 """API Schemas for the Organization module."""
 
-from pydantic import BaseModel, Field
+from datetime import datetime
+
+from pydantic import BaseModel, EmailStr, Field
 
 
 class OrganizationCreate(BaseModel):
@@ -48,3 +50,34 @@ class DepartmentResponse(BaseModel):
     name: str
     code: str | None
     status: str
+
+
+class MemberAddRequest(BaseModel):
+    """Add an existing Cortex user to this organization by email."""
+
+    email: EmailStr
+    role_id: str
+
+
+class MemberWithRolesResponse(BaseModel):
+    """Member details including their role assignments."""
+
+    id: str
+    email: str
+    first_name: str | None
+    last_name: str | None
+    status: str
+    membership_id: str
+    roles: list[str]  # Role names
+    joined_at: datetime | None = None
+
+
+class OrgStatsResponse(BaseModel):
+    """Aggregate stats for the organization dashboard."""
+
+    total_members: int
+    total_events: int
+    upcoming_events: int
+    pending_approvals: int
+    total_registrations: int
+    total_attendance: int

@@ -55,10 +55,27 @@ class Event:
 
 
 @dataclass
+class EventParticipant:
+    """A guest who registered for an event without a Cortex Identity account."""
+
+    id: str
+    full_name: str
+    email: str
+    phone: str | None = None
+    institution: str | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+@dataclass
 class EventRegistration:
     id: str
     event_id: str
-    user_id: str
+    # Either user_id (authenticated Cortex user) OR participant_id (guest) — not both.
+    user_id: str | None = None
+    participant_id: str | None = None
+    # Random 32-char hex token — the only public-facing identifier for ticket access.
+    ticket_token: str | None = None
     status: RegistrationStatus = RegistrationStatus.REGISTERED
     registered_at: datetime | None = None
     cancelled_at: datetime | None = None
@@ -71,7 +88,7 @@ class EventAttendance:
     id: str
     event_id: str
     registration_id: str
-    user_id: str
+    user_id: str | None  # nullable since participant guests don't have a user_id
     checked_in_at: datetime
     method: AttendanceMethod
     created_at: datetime | None = None
